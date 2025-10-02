@@ -229,12 +229,20 @@ class MultiPairManager:
         return True
     
     def boost_allocation_for_signal(self, symbol: str, signal: Dict) -> bool:
-        """Boost allocation for a pair that matches a signal
-        
+        """
+        Boost allocation for a pair that matches a signal.
+
+        Redistribution rules:
+        - Target allocation for the specified pair is at least 10% of the total allocated balance.
+        - No more than 20% of the balance can be taken from any donor pair.
+        - Donor pairs cannot be reduced below 10% of the total allocated balance.
+
+        Side effects:
+        - Mutates self.pair_balances to reflect the redistribution.
+
         Args:
             symbol: Trading pair symbol
             signal: Current trading signal
-            
         Returns:
             True if allocation was boosted, False otherwise
         """
