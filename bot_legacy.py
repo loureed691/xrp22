@@ -15,14 +15,29 @@ from technical_analysis import TechnicalAnalyzer
 from hedge_strategy import HedgeStrategy
 from funding_strategy import FundingStrategy
 
+# Setup logging with UTF-8 encoding support
+import sys
+
+# Create file handler with UTF-8 encoding
+file_handler = logging.FileHandler('bot.log', encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+# Create console handler with error handling for Windows
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+# Configure console handler to handle encoding errors gracefully on Windows
+if sys.platform == 'win32':
+    # On Windows, wrap stdout to handle Unicode encoding errors
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, errors='replace')
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('bot.log'),
-        logging.StreamHandler()
-    ]
+    handlers=[file_handler, console_handler]
 )
 logger = logging.getLogger(__name__)
 
