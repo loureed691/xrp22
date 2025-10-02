@@ -2,6 +2,39 @@
 
 All notable changes to the XRP Hedge Bot project will be documented in this file.
 
+## [2.2.0] - 2025-01-XX
+
+### Added - Automatic Best Pair Selection
+- **Intelligent Pair Selection**: Bot can now automatically identify and trade only the most profitable pair
+  - New `best` allocation strategy that focuses all capital on the top-performing pair
+  - Composite scoring system based on win rate (60%) and trade activity/reliability (40%)
+  - Automatic fallback to equal allocation when no trading history exists
+  
+- **Enhanced Multi-Pair Manager**:
+  - `get_best_pair()` method to identify the top performer
+  - `get_pair_rankings()` method to rank all pairs by performance
+  - `allocate_to_best_pair()` method for focused allocation
+  - Detailed performance rankings logged periodically
+
+- **New Demo Script**: `demo_best_pair.py` showcasing automatic pair selection
+  - Demonstrates all allocation strategies side-by-side
+  - Shows ranking system with emoji indicators
+  - Includes no-history fallback scenario
+
+### Enhanced
+- Updated `bot_enhanced.py` to display pair rankings when using best strategy
+- Periodic ranking updates (every 5 trades) for all strategies
+- Enhanced logging for better visibility into pair selection decisions
+
+### Documentation
+- Updated `ADVANCED_FEATURES.md` with detailed best pair allocation documentation
+- Updated `README.md` highlighting new automatic pair selection feature
+- Updated `QUICKSTART.md` with practical multi-pair examples
+- Updated `.env.example` with best allocation strategy option
+- Enhanced code comments explaining the scoring algorithm
+
+---
+
 ## [2.1.0] - 2024-12-XX
 
 ### Enhanced - ML Signal Generator Made Smarter

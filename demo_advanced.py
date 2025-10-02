@@ -79,6 +79,22 @@ def demo_multiple_pairs():
     for pair, amount in allocations.items():
         stats = manager.get_pair_statistics(pair)
         print(f"    {pair}: ${amount:.2f} (Win rate: {stats['win_rate']:.1f}%)")
+    
+    # Best pair allocation (NEW)
+    allocations = manager.allocate_balance(balance, 'best')
+    best_pair = manager.get_best_pair()
+    print("\n  ⭐ Best Pair Allocation (NEW - automatically selects most profitable):")
+    for pair, amount in allocations.items():
+        if amount > 0:
+            stats = manager.get_pair_statistics(pair)
+            print(f"    ✅ {pair}: ${amount:.2f} (Win rate: {stats['win_rate']:.1f}%) - SELECTED")
+        else:
+            print(f"    ⚪ {pair}: ${amount:.2f}")
+    
+    print(f"\n  📊 Pair Rankings:")
+    rankings = manager.get_pair_rankings()
+    for i, rank in enumerate(rankings, 1):
+        print(f"    {i}. {rank['symbol']}: Win {rank['win_rate']:.0f}%, Score {rank['score']:.2f}")
 
 
 def demo_ml_signals():
