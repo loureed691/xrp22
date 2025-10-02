@@ -1,5 +1,6 @@
 """
 Configuration module for the KuCoin XRP Futures Hedge Bot
+Smart auto-detection of features based on environment variables
 """
 import os
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    """Bot configuration class"""
+    """Bot configuration class with smart auto-detection"""
     
     # KuCoin API Configuration
     API_KEY = os.getenv('KUCOIN_API_KEY', '')
@@ -42,17 +43,35 @@ class Config:
     EMA_LONG = int(os.getenv('EMA_LONG', 26))
     MACD_SIGNAL = int(os.getenv('MACD_SIGNAL', 9))
     
-    # New Features
-    USE_ML_SIGNALS = os.getenv('USE_ML_SIGNALS', 'false').lower() == 'true'
-    ENABLE_WEB_DASHBOARD = os.getenv('ENABLE_WEB_DASHBOARD', 'false').lower() == 'true'
-    WEB_DASHBOARD_PORT = int(os.getenv('WEB_DASHBOARD_PORT', 5000))
+    # Smart Feature Auto-Detection
+    # Telegram: Auto-enable if both token and chat_id are provided
     TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
     TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
-    ENABLE_DYNAMIC_LEVERAGE = os.getenv('ENABLE_DYNAMIC_LEVERAGE', 'false').lower() == 'true'
+    _telegram_configured = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+    
+    # ML Signals: Auto-enable if explicitly set to true
+    USE_ML_SIGNALS = os.getenv('USE_ML_SIGNALS', 'false').lower() == 'true'
+    
+    # Web Dashboard: Auto-enable if explicitly set to true
+    ENABLE_WEB_DASHBOARD = os.getenv('ENABLE_WEB_DASHBOARD', 'false').lower() == 'true'
+    WEB_DASHBOARD_PORT = int(os.getenv('WEB_DASHBOARD_PORT', 5000))
+    
+    # Dynamic Leverage: Auto-enable if MIN/MAX are different from base leverage
     MIN_LEVERAGE = int(os.getenv('MIN_LEVERAGE', 5))
     MAX_LEVERAGE = int(os.getenv('MAX_LEVERAGE', 20))
-    TRADING_PAIRS = os.getenv('TRADING_PAIRS', 'XRPUSDTM').split(',')
-    ALLOCATION_STRATEGY = os.getenv('ALLOCATION_STRATEGY', 'equal')  # equal, weighted, dynamic, best
+    _dynamic_leverage_configured = (MIN_LEVERAGE != LEVERAGE or MAX_LEVERAGE != LEVERAGE)
+    # Enable if explicitly set OR if leverage range is configured differently
+    ENABLE_DYNAMIC_LEVERAGE = (
+        os.getenv('ENABLE_DYNAMIC_LEVERAGE', 'auto').lower() == 'true' or
+        (os.getenv('ENABLE_DYNAMIC_LEVERAGE', 'auto').lower() == 'auto' and _dynamic_leverage_configured)
+    )
+    
+    # Multiple Trading Pairs: Auto-detect from comma-separated list
+    TRADING_PAIRS = [pair.strip() for pair in os.getenv('TRADING_PAIRS', 'XRPUSDTM').split(',')]
+    _is_multi_pair = len(TRADING_PAIRS) > 1
+    
+    # Allocation strategy: Use 'best' automatically if multiple pairs configured
+    ALLOCATION_STRATEGY = os.getenv('ALLOCATION_STRATEGY', 'best' if _is_multi_pair else 'equal')
     
     # API Endpoints
     API_URL = 'https://api-futures.kucoin.com' if not USE_TESTNET else 'https://api-sandbox-futures.kucoin.com'
@@ -70,3 +89,31 @@ class Config:
             raise ValueError("Initial balance must be positive")
         
         return True
+    
+    @classmethod
+    def get_feature_summary(cls):
+        """Get a summary of enabled features for logging"""
+        features = []
+        
+        if cls._telegram_configured:
+            features.append("✓ Telegram notifications")
+        
+        if cls.USE_ML_SIGNALS:
+            features.append("✓ ML-based signals")
+        
+        if cls.ENABLE_WEB_DASHBOARD:
+            features.append(f"✓ Web dashboard (port {cls.WEB_DASHBOARD_PORT})")
+        
+        if cls.ENABLE_DYNAMIC_LEVERAGE:
+            features.append(f"✓ Dynamic leverage ({cls.MIN_LEVERAGE}x-{cls.MAX_LEVERAGE}x)")
+        
+        if cls._is_multi_pair:
+            features.append(f"✓ Multi-pair trading ({len(cls.TRADING_PAIRS)} pairs, {cls.ALLOCATION_STRATEGY} strategy)")
+        
+        if cls.USE_FUNDING_STRATEGY:
+            features.append("✓ Intelligent funding strategy")
+        
+        if not features:
+            features.append("Basic trading mode")
+        
+        return "\n  ".join(features)

@@ -68,15 +68,21 @@ This will check:
 python bot.py
 ```
 
-The bot will now:
-- Analyze XRP/USDT futures market every 60 seconds
-- Generate trading signals using multiple indicators
+**The unified bot automatically detects and enables features based on your .env configuration!**
+
+The bot will:
+- Auto-detect enabled features from your configuration
+- Analyze markets every 60 seconds
+- Generate trading signals using technical indicators (+ ML if enabled)
 - Execute trades automatically
-- Manage positions with stop loss and take profit
-- Reinvest all profits automatically
+- Manage positions with intelligent risk management
+- Send notifications (if Telegram is configured)
+- Track multiple pairs (if multiple pairs configured)
+- Adjust leverage dynamically (if enabled)
+- Provide web dashboard (if enabled)
 
 ### Step 6: Monitor Performance
-- Watch console output for real-time updates
+- Watch console output for real-time updates and feature detection
 - Check `bot.log` for detailed logs
 - Review `bot_data/trade_history.jsonl` for trade records
 

@@ -2,6 +2,55 @@
 
 All notable changes to the XRP Hedge Bot project will be documented in this file.
 
+## [2.2.1] - 2025-01-XX
+
+### Major - Unified Bot with Smart Auto-Detection 🎯
+
+**The bot is now fully unified with intelligent feature detection!**
+
+#### Changed
+- **Merged bot.py and bot_enhanced.py**: Single bot file for all use cases
+  - Automatically enables advanced features based on configuration
+  - Gracefully handles missing advanced modules
+  - Works for both simple and advanced trading setups
+  - No need to choose between two different bot files anymore!
+
+#### Added - Smart Auto-Detection in Config
+- **Telegram Notifications**: Auto-enabled when both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are provided
+- **Multi-Pair Trading**: Auto-enabled when multiple pairs are specified in `TRADING_PAIRS`
+  - Automatically uses 'best' allocation strategy for multi-pair setups
+- **Dynamic Leverage**: Auto-enabled when `ENABLE_DYNAMIC_LEVERAGE=auto` and leverage range differs from base
+- **Feature Summary Method**: `Config.get_feature_summary()` shows enabled features at startup
+
+#### Enhanced
+- **bot.py**: Complete rewrite with smart feature detection
+  - Supports both single-pair and multi-pair trading
+  - Integrates ML signals, Telegram, web dashboard, and dynamic leverage
+  - Shows enabled features on startup
+  - Missing `calculate_win_rate()` method added
+- **config.py**: Added intelligent auto-detection logic
+  - Internal flags: `_telegram_configured`, `_is_multi_pair`, `_dynamic_leverage_configured`
+  - Smart defaults based on configuration
+  - Clear feature summary for logging
+
+#### Updated Documentation
+- **README.md**: Updated to reflect unified bot with smart auto-detection
+- **QUICKSTART.md**: Simplified to single bot.py entry point
+- **IMPLEMENTATION_SUMMARY.md**: Updated migration guide and best practices
+- **.env.example**: Added detailed comments explaining auto-detection
+
+#### Removed
+- **bot_enhanced.py**: Functionality merged into unified bot.py
+
+#### Benefits
+1. **Simpler**: Just one bot file to run
+2. **Smarter**: Automatically detects what you want to use
+3. **Flexible**: Works from basic to advanced configurations
+4. **Clear**: Shows exactly which features are enabled
+5. **Maintainable**: Single codebase instead of two
+
+---
+
 ## [2.2.0] - 2025-01-XX
 
 ### Added - Automatic Best Pair Selection
