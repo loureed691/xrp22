@@ -90,7 +90,8 @@ class XRPHedgeBot:
                 min_balance_reserve_percent=Config.MIN_BALANCE_RESERVE_PERCENT,
                 base_position_size_percent=Config.BASE_POSITION_SIZE_PERCENT,
                 max_position_size_percent=Config.MAX_POSITION_SIZE_PERCENT_NEW,
-                min_position_size_percent=Config.MIN_POSITION_SIZE_PERCENT
+                min_position_size_percent=Config.MIN_POSITION_SIZE_PERCENT,
+                min_position_value_usd=Config.MIN_POSITION_VALUE_USD
             )
             logger.info("Using intelligent funding strategy")
         else:
@@ -614,6 +615,8 @@ class XRPHedgeBot:
                         if success:
                             self.strategy.reset_tracking()
                             self.recent_losses = 0
+                    else:
+                        logger.info(f"Position size is 0 for {symbol} - insufficient balance or position value below minimum")
                         
                 elif suggestion['action'] == 'close':
                     if position:

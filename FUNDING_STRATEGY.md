@@ -30,6 +30,18 @@ Positions are sized based on market volatility tiers:
 - **Medium Risk** (2-5% volatility): 1.0x base position size  
 - **High Risk** (> 5% volatility): 0.6x base position size
 
+### 5. **Minimum Position Value**
+- Ensures each trade meets a **minimum size** (e.g., $25 margin)
+- Prevents opening tiny positions that may not be worth the trading fees
+- Automatically adjusts position size to meet the minimum or skips the trade if balance is insufficient
+- Configurable via `MIN_POSITION_VALUE_USD` (set to 0 to disable)
+
+**Example**: With a $120 balance, 20% reserve, and $25 minimum:
+- Available funds: $96
+- Without minimum: Position might be only $10-15
+- With $25 minimum: Position will be $25 or trade is skipped
+- Requires minimum balance: $31.25 total to meet $25 position after reserve
+
 ## Configuration
 
 Add these settings to your `.env` file:
@@ -49,6 +61,12 @@ MAX_POSITION_SIZE_PERCENT_NEW=40
 
 # Minimum % of available balance for a single position
 MIN_POSITION_SIZE_PERCENT=5
+
+# Minimum position value in USD (ensures each trade meets a minimum size)
+# Set to 0 to disable minimum position value
+# Example: With $120 balance and MIN_POSITION_VALUE_USD=25, 
+#          bot ensures each trade uses at least $25 (margin)
+MIN_POSITION_VALUE_USD=25
 ```
 
 ## How It Works
@@ -85,6 +103,14 @@ The system calculates position size through multiple steps:
    Position % = BASE_POSITION_SIZE × Risk Score × Tier Multiplier
    Position % = Clamp(Position %, MIN_POSITION_SIZE, MAX_POSITION_SIZE)
    Position Value = Available Funds × (Position % / 100)
+   
+   # Apply minimum position value if configured
+   if MIN_POSITION_VALUE_USD > 0 and Position Value < MIN_POSITION_VALUE_USD:
+       if Available Balance < Required Balance for Minimum:
+           Skip Trade (insufficient balance)
+       else:
+           Position Value = MIN_POSITION_VALUE_USD
+   
    Contracts = (Position Value × Leverage) / Current Price
    ```
 
@@ -119,6 +145,29 @@ The system calculates position size through multiple steps:
 **Result**: Trading blocked automatically
 - Circuit breaker activated
 - Time to review strategy
+
+#### Scenario 4: Small Balance with Minimum Position Value
+- Balance: $120
+- Reserve: 20% ($24)
+- Available: $96
+- MIN_POSITION_VALUE_USD: $25
+- Leverage: 11x
+- Asset Price: $0.034496
+
+**Without minimum position value**:
+- Calculated position: ~$14.40 (15% of $96)
+- Result: ~4,589 contracts (~$158.29 leveraged)
+- May not be worth trading fees
+
+**With $25 minimum position value**:
+- Calculated position: $14.40 → adjusted to $25.00
+- Result: ~7,971 contracts (~$274.97 leveraged)
+- Ensures meaningful position size for trading
+
+**If balance too low** (e.g., $30 total):
+- Available: $24 (after 20% reserve)
+- Needs: $31.25 total to meet $25 minimum
+- Result: Trade skipped - "Insufficient balance"
 
 ## Comparison with Legacy System
 
