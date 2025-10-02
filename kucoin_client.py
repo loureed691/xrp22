@@ -8,6 +8,7 @@ import base64
 import json
 import requests
 from typing import Dict, List, Optional
+from urllib.parse import urlencode
 import logging
 
 logger = logging.getLogger(__name__)
@@ -68,7 +69,13 @@ class KuCoinFuturesClient:
         if data:
             body = json.dumps(data)
         
-        headers = self._get_headers(method, endpoint, body)
+        # For GET/DELETE requests with params, include query string in signature
+        endpoint_for_signature = endpoint
+        if method in ['GET', 'DELETE'] and params:
+            query_string = urlencode(sorted(params.items()))
+            endpoint_for_signature = f"{endpoint}?{query_string}"
+        
+        headers = self._get_headers(method, endpoint_for_signature, body)
         
         try:
             if method == 'GET':

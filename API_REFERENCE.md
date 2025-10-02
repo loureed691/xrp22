@@ -19,9 +19,13 @@ KC-API-KEY-VERSION: 2
 
 ### Signature Generation
 ```python
+# For GET/DELETE requests with query parameters, include them in the endpoint
+# Example: endpoint = "/api/v1/account-overview?currency=USDT"
 str_to_sign = timestamp + method + endpoint + body
 signature = base64(hmac_sha256(api_secret, str_to_sign))
 ```
+
+**Important:** For GET and DELETE requests with query parameters, the endpoint must include the query string (e.g., `/api/v1/account-overview?currency=USDT`) when calculating the signature.
 
 ## Endpoints Used
 
