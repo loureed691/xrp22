@@ -17,6 +17,7 @@ class FundingStrategy:
         base_position_size_percent: float = 15.0,
         max_position_size_percent: float = 40.0,
         min_position_size_percent: float = 5.0,
+        min_position_value_usd: float = 25.0,
         risk_tiers: Optional[Dict] = None
     ):
         """Initialize funding strategy
@@ -26,12 +27,14 @@ class FundingStrategy:
             base_position_size_percent: Base % of available balance to use per position
             max_position_size_percent: Maximum % of available balance for a single position
             min_position_size_percent: Minimum % of available balance for a single position
+            min_position_value_usd: Minimum position value in USD (0 to disable)
             risk_tiers: Custom risk tier configuration
         """
         self.min_balance_reserve_percent = min_balance_reserve_percent
         self.base_position_size_percent = base_position_size_percent
         self.max_position_size_percent = max_position_size_percent
         self.min_position_size_percent = min_position_size_percent
+        self.min_position_value_usd = min_position_value_usd
         
         # Default risk tiers
         self.risk_tiers = risk_tiers or {
@@ -44,6 +47,7 @@ class FundingStrategy:
         logger.info(f"  Reserve: {self.min_balance_reserve_percent}%")
         logger.info(f"  Base position size: {self.base_position_size_percent}%")
         logger.info(f"  Position size range: {self.min_position_size_percent}%-{self.max_position_size_percent}%")
+        logger.info(f"  Minimum position value: ${self.min_position_value_usd:.2f}")
     
     def calculate_available_funds(self, total_balance: float) -> float:
         """Calculate available funds after reserving minimum balance
@@ -174,6 +178,20 @@ class FundingStrategy:
         # Calculate position value
         position_value = available_funds * (position_size_percent / 100)
         
+        # Enforce minimum position value if configured
+        if self.min_position_value_usd > 0 and position_value < self.min_position_value_usd:
+            logger.info(f"Position value ${position_value:.2f} is below minimum ${self.min_position_value_usd:.2f}")
+            
+            # Check if we have enough balance to meet minimum
+            min_required_balance = self.min_position_value_usd / (1 - self.min_balance_reserve_percent / 100)
+            if available_balance < min_required_balance:
+                logger.warning(f"Insufficient balance to meet minimum position value. Need at least ${min_required_balance:.2f}")
+                return 0
+            
+            # Use minimum position value
+            position_value = self.min_position_value_usd
+            logger.info(f"Adjusting to minimum position value: ${position_value:.2f}")
+        
         # Apply leverage
         position_value_with_leverage = position_value * leverage
         
@@ -218,6 +236,16 @@ class FundingStrategy:
         available_funds = self.calculate_available_funds(available_balance)
         if available_funds <= 1:
             return False, f"Insufficient funds after reserve: ${available_funds:.2f}"
+        
+        # Check minimum position value
+        if self.min_position_value_usd > 0 and position_value < self.min_position_value_usd * 0.99:  # Allow 1% tolerance
+            return False, f"Position value ${position_value:.2f} below minimum ${self.min_position_value_usd:.2f}"
+        
+        # Check if we have enough balance to meet minimum position value
+        if self.min_position_value_usd > 0:
+            min_required_balance = self.min_position_value_usd / (1 - self.min_balance_reserve_percent / 100)
+            if available_balance < min_required_balance:
+                return False, f"Balance ${available_balance:.2f} insufficient for minimum position value ${self.min_position_value_usd:.2f} (need ${min_required_balance:.2f})"
         
         # Check if position value is reasonable
         if position_value > available_balance * (self.max_position_size_percent / 100):

@@ -34,6 +34,7 @@ class Config:
     BASE_POSITION_SIZE_PERCENT = float(os.getenv('BASE_POSITION_SIZE_PERCENT', 15))
     MAX_POSITION_SIZE_PERCENT_NEW = float(os.getenv('MAX_POSITION_SIZE_PERCENT_NEW', 40))
     MIN_POSITION_SIZE_PERCENT = float(os.getenv('MIN_POSITION_SIZE_PERCENT', 5))
+    MIN_POSITION_VALUE_USD = float(os.getenv('MIN_POSITION_VALUE_USD', 25))
     
     # Technical Indicators
     RSI_PERIOD = int(os.getenv('RSI_PERIOD', 14))
