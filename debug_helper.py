@@ -1,6 +1,39 @@
 """
 Debug Helper Script
-Provides utilities for debugging and monitoring the bot
+
+This utility script provides a set of functions for debugging and monitoring the bot's operation.
+
+Main Functions:
+- check_trade_history(): Analyze trade history for issues, summarize trades by symbol, and check for failed trades or leverage anomalies.
+- check_bot_data(): List files in the bot_data directory and report their sizes.
+- check_config(): Validate the bot configuration and display key settings.
+- check_api_connection(): Test connection to the KuCoin API and display account/ticker info (requires --test-api flag).
+- check_logs(): Summarize recent log entries and highlight errors.
+- main(): Runs all checks; entry point for the script.
+
+Usage:
+    python debug_helper.py
+        Runs all debug checks except API connection.
+
+    python debug_helper.py --test-api
+        Runs all debug checks and tests the KuCoin API connection.
+
+Expected Output:
+    - Console printouts with section headers, check results, and summary statistics.
+    - Symbols (✓, ❌, ⚠️, 💡) indicate success, failure, warnings, and tips.
+    - Error details and recent log errors are displayed if found.
+
+Requirements:
+    - bot_data directory with trade_history.jsonl and log files.
+    - config.py and kucoin_client.py modules for API tests.
+
+Example:
+    $ python debug_helper.py
+    BOT DEBUG HELPER
+    Run at: 2024-06-01T12:34:56.789012
+    CONFIGURATION CHECK
+    ...
+    DEBUG CHECK COMPLETE
 """
 import sys
 import os
