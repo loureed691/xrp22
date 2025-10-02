@@ -149,7 +149,7 @@ class BacktestEngine:
         logger.info("Starting backtest...")
         
         balance = self.initial_balance
-        current_position = None
+        current_position: Optional[Dict] = None
         self.trades = []
         self.balance_history = []
         self.positions = []
@@ -197,7 +197,8 @@ class BacktestEngine:
                         'size': size
                     })
             
-            elif suggestion['action'] == 'close' and current_position:
+            elif suggestion['action'] == 'close' and current_position is not None:
+                # pylint: disable=unsubscriptable-object
                 size = abs(current_position['currentQty'])
                 balance, trade = self.simulate_trade(
                     'close', suggestion['side'], size, current_price,
