@@ -566,7 +566,11 @@ class XRPHedgeBot:
                         logger.warning(f"Diversification check failed: {e}")
                 
                 # Get allocated balance for this pair
-                pair_balance = allocations.get(symbol, balance)
+                # Re-fetch from multi_pair manager to get any updated allocations
+                if self.multi_pair:
+                    pair_balance = self.multi_pair.get_pair_allocation(symbol)
+                else:
+                    pair_balance = allocations.get(symbol, balance)
                 
                 # Get strategy suggestion
                 suggestion = self.strategy.suggest_action(signal, position, pair_balance)
