@@ -277,6 +277,21 @@ Leverage adjusts based on conditions:
 - **Signal-based**: Higher leverage with strong signals
 - **Risk-adjusted**: Consider account balance and exposure
 
+### Intelligent Funding Strategy (NEW!)
+Smart position sizing that protects your capital:
+- **Balance Reserve**: Always keeps 20% safe as emergency fund
+- **Risk-Based Sizing**: Adapts position size (5-40%) based on:
+  - Market volatility (smaller in volatile markets)
+  - Win rate (larger when performing well)
+  - Signal strength (larger with strong signals)
+  - Recent losses (smaller after losses)
+- **Circuit Breakers**: 
+  - After 3 losses: Only minimum positions
+  - After 5 losses: Trading paused automatically
+- **Quick Start**: See [FUNDING_QUICKSTART.md](FUNDING_QUICKSTART.md)
+- **Full Details**: See [FUNDING_STRATEGY.md](FUNDING_STRATEGY.md)
+- **Try It**: Run `python demo_funding_strategy.py`
+
 ### Telegram Notifications
 Stay informed with real-time alerts:
 - Trade executions (open, close, hedge)
@@ -287,11 +302,25 @@ Stay informed with real-time alerts:
 
 ## Risk Management
 
-- **Maximum Position Size**: 80% of available balance
-- **11x Leverage**: Amplifies both gains and losses
+The bot includes multiple layers of risk protection:
+
+### Intelligent Funding Strategy (Recommended)
+- **Balance Reserve**: 20% of balance always protected
+- **Adaptive Position Sizing**: 5-40% of available balance based on:
+  - Market volatility
+  - Historical win rate
+  - Signal strength
+  - Recent performance
+- **Circuit Breakers**: Automatic pause after 5 consecutive losses
+- **Total Exposure Limits**: Considers existing positions
+
+### Traditional Risk Controls
 - **Stop Loss**: Automatically exits at 5% loss
 - **Take Profit**: Locks in gains at 8% profit
 - **Trailing Stop**: Protects profits by trailing 3% from peak
+- **11x Leverage**: Balanced leverage for controlled risk amplification
+
+**Note**: The old "Maximum Position Size: 80%" setting is replaced by the Intelligent Funding Strategy when enabled (recommended). See [FUNDING_STRATEGY.md](FUNDING_STRATEGY.md) for details.
 
 ## File Structure
 
@@ -304,6 +333,7 @@ xrp22/
 ├── kucoin_client.py            # KuCoin API client
 ├── technical_analysis.py       # Technical indicators
 ├── hedge_strategy.py           # Trading strategy logic
+├── funding_strategy.py         # Intelligent position sizing (NEW)
 ├── web_dashboard.py            # Web dashboard module
 ├── telegram_notifier.py        # Telegram notifications
 ├── ml_signals.py               # ML-based signal generation
