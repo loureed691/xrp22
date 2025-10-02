@@ -21,6 +21,7 @@ from ml_signals import MLSignalGenerator
 from multi_pair import MultiPairManager
 from dynamic_leverage import DynamicLeverage
 from portfolio_diversification import PortfolioDiversifier
+from funding_strategy import FundingStrategy
 
 # Setup logging
 logging.basicConfig(
@@ -71,13 +72,30 @@ class EnhancedXRPBot:
             self.dynamic_leverage = None
             current_leverage = Config.LEVERAGE
         
+        # Initialize funding strategy if enabled
+        funding_strategy = None
+        if Config.USE_FUNDING_STRATEGY:
+            funding_strategy = FundingStrategy(
+                min_balance_reserve_percent=Config.MIN_BALANCE_RESERVE_PERCENT,
+                base_position_size_percent=Config.BASE_POSITION_SIZE_PERCENT,
+                max_position_size_percent=Config.MAX_POSITION_SIZE_PERCENT_NEW,
+                min_position_size_percent=Config.MIN_POSITION_SIZE_PERCENT
+            )
+            logger.info("Using intelligent funding strategy")
+        else:
+            logger.info("Using legacy position sizing")
+        
         self.strategy = HedgeStrategy(
             leverage=current_leverage,
             stop_loss_percent=Config.STOP_LOSS_PERCENT,
             take_profit_percent=Config.TAKE_PROFIT_PERCENT,
             trailing_stop_percent=Config.TRAILING_STOP_PERCENT,
-            max_position_size_percent=Config.MAX_POSITION_SIZE_PERCENT
+            max_position_size_percent=Config.MAX_POSITION_SIZE_PERCENT,
+            funding_strategy=funding_strategy
         )
+        
+        # Store reference for direct access
+        self.funding_strategy = funding_strategy
         
         # Initialize new features
         self.telegram = TelegramNotifier(
@@ -241,6 +259,35 @@ class EnhancedXRPBot:
         logger.info(f"Signal: {signal['action'].upper()} | Strength: {signal['strength']} | Reason: {signal['reason']}")
         
         return signal
+    
+    def calculate_volatility(self, klines: list) -> float:
+        """Calculate market volatility from klines
+        
+        Args:
+            klines: List of kline data
+            
+        Returns:
+            Volatility as a decimal (e.g., 0.03 for 3%)
+        """
+        if not klines or len(klines) < 2:
+            return 0.03  # Default 3%
+        
+        # Calculate returns from close prices
+        closes = [float(k[4]) for k in klines]  # Index 4 is close price
+        returns = []
+        for i in range(1, len(closes)):
+            ret = (closes[i] - closes[i-1]) / closes[i-1]
+            returns.append(ret)
+        
+        # Calculate standard deviation of returns
+        if not returns:
+            return 0.03
+        
+        mean_return = sum(returns) / len(returns)
+        variance = sum((r - mean_return) ** 2 for r in returns) / len(returns)
+        volatility = variance ** 0.5
+        
+        return volatility
     
     def execute_trade(self, symbol: str, action: str, side: str, size: int, 
                      price: float, reason: str) -> bool:
@@ -410,18 +457,50 @@ class EnhancedXRPBot:
                 
                 # Execute action based on suggestion
                 if suggestion['action'] == 'open' and pair_balance > 0:
-                    # Calculate optimal position size with diversification
-                    existing_positions = {
-                        s: abs(self.positions.get(s, {}).get('currentQty', 0)) * 
-                           self.positions.get(s, {}).get('avgEntryPrice', 1)
-                        for s in Config.TRADING_PAIRS if self.positions.get(s)
-                    }
+                    # Calculate volatility and win rate for intelligent sizing
+                    volatility = self.calculate_volatility(market_data['klines'])
+                    win_rate = self.calculate_win_rate()
                     
-                    optimal_value = self.diversifier.calculate_optimal_position_size(
-                        symbol, pair_balance, existing_positions
+                    # Calculate total value of existing positions
+                    existing_positions_value = sum(
+                        abs(self.positions.get(s, {}).get('currentQty', 0)) * 
+                        self.positions.get(s, {}).get('avgEntryPrice', 1)
+                        for s in Config.TRADING_PAIRS if self.positions.get(s)
                     )
                     
-                    size = int(optimal_value / market_data['price'] * self.strategy.leverage)
+                    # Use funding strategy if available, otherwise use diversifier
+                    if self.funding_strategy:
+                        size = self.strategy.calculate_position_size(
+                            available_balance=pair_balance,
+                            current_price=market_data['price'],
+                            volatility=volatility,
+                            win_rate=win_rate,
+                            recent_losses=self.recent_losses,
+                            signal_strength=signal['strength'],
+                            existing_positions_value=existing_positions_value
+                        )
+                        
+                        # Check if trade should be allowed
+                        position_value = size * market_data['price'] / self.strategy.leverage
+                        should_allow, reason = self.funding_strategy.should_allow_trade(
+                            balance, position_value, self.recent_losses
+                        )
+                        if not should_allow:
+                            logger.warning(f"Trade blocked for {symbol}: {reason}")
+                            continue
+                    else:
+                        # Original diversifier logic
+                        existing_positions = {
+                            s: abs(self.positions.get(s, {}).get('currentQty', 0)) * 
+                               self.positions.get(s, {}).get('avgEntryPrice', 1)
+                            for s in Config.TRADING_PAIRS if self.positions.get(s)
+                        }
+                        
+                        optimal_value = self.diversifier.calculate_optimal_position_size(
+                            symbol, pair_balance, existing_positions
+                        )
+                        
+                        size = int(optimal_value / market_data['price'] * self.strategy.leverage)
                     
                     if size > 0:
                         success = self.execute_trade(

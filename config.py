@@ -27,6 +27,13 @@ class Config:
     TAKE_PROFIT_PERCENT = float(os.getenv('TAKE_PROFIT_PERCENT', 8))
     TRAILING_STOP_PERCENT = float(os.getenv('TRAILING_STOP_PERCENT', 3))
     
+    # Funding Strategy (Better balance management)
+    USE_FUNDING_STRATEGY = os.getenv('USE_FUNDING_STRATEGY', 'true').lower() == 'true'
+    MIN_BALANCE_RESERVE_PERCENT = float(os.getenv('MIN_BALANCE_RESERVE_PERCENT', 20))
+    BASE_POSITION_SIZE_PERCENT = float(os.getenv('BASE_POSITION_SIZE_PERCENT', 15))
+    MAX_POSITION_SIZE_PERCENT_NEW = float(os.getenv('MAX_POSITION_SIZE_PERCENT_NEW', 40))
+    MIN_POSITION_SIZE_PERCENT = float(os.getenv('MIN_POSITION_SIZE_PERCENT', 5))
+    
     # Technical Indicators
     RSI_PERIOD = int(os.getenv('RSI_PERIOD', 14))
     RSI_OVERSOLD = float(os.getenv('RSI_OVERSOLD', 30))
