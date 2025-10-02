@@ -164,6 +164,7 @@ class XRPHedgeBot:
         self.current_balance = Config.INITIAL_BALANCE
         self.positions = {}  # Track positions for each pair (multi-pair mode)
         self.recent_losses = 0  # Track consecutive losses
+        self.start_time = None  # Will be set when bot starts running
         
         # Create data directory
         os.makedirs('bot_data', exist_ok=True)
@@ -226,6 +227,10 @@ class XRPHedgeBot:
             ticker = self.client.get_ticker(symbol)
             current_price = float(ticker.get('price', 0))
             
+            if current_price <= 0:
+                logger.error(f"Invalid price received for {symbol}: {current_price}")
+                return None
+            
             # Get kline data for analysis (5 minute candles, last 8 hours)
             klines = self.client.get_klines(
                 symbol=symbol,
@@ -233,6 +238,10 @@ class XRPHedgeBot:
                 from_time=int(time.time() - 8 * 60 * 60) * 1000,  # Last 8 hours
                 to_time=int(time.time()) * 1000
             )
+            
+            if not klines or len(klines) < 10:
+                logger.warning(f"Insufficient kline data for {symbol}: {len(klines) if klines else 0} candles")
+                return None
             
             logger.info(f"{symbol} price: ${current_price:.6f}")
             logger.info(f"Retrieved {len(klines)} candles for analysis")
@@ -248,7 +257,7 @@ class XRPHedgeBot:
                 'symbol': symbol
             }
         except Exception as e:
-            logger.error(f"Error getting market data for {symbol}: {e}")
+            logger.error(f"Error getting market data for {symbol}: {e}", exc_info=True)
             return None
     
     def analyze_market(self, market_data: Dict) -> Dict:
@@ -355,7 +364,7 @@ class XRPHedgeBot:
             return 50.0  # Default 50% if no trades yet
         return (self.winning_trades / total_completed_trades) * 100
     
-    def execute_trade(self, symbol: str, action: str, side: str, size: int, reason: str) -> bool:
+    def execute_trade(self, symbol: str, action: str, side: str, size: int, reason: str, market_data: Optional[Dict] = None) -> bool:
         """Execute a trade
         
         Args:
@@ -364,15 +373,27 @@ class XRPHedgeBot:
             side: Trade side (buy/sell)
             size: Position size in contracts
             reason: Reason for the trade
+            market_data: Optional pre-fetched market data to avoid redundant API calls
         """
         try:
+            # Validate inputs
+            if size <= 0:
+                logger.error(f"Invalid trade size: {size}")
+                return False
+            
+            if side not in ['buy', 'sell']:
+                logger.error(f"Invalid trade side: {side}")
+                return False
+            
             logger.info(f"Executing {action} on {symbol}: {side} {size} contracts - {reason}")
             
             # Adjust leverage if dynamic leverage is enabled
             if self.dynamic_leverage:
                 try:
                     balance = self.get_account_balance()
-                    market_data = self.get_market_data(symbol)
+                    # Reuse market_data if provided, otherwise fetch
+                    if not market_data:
+                        market_data = self.get_market_data(symbol)
                     if market_data:
                         signal = self.analyze_market(market_data)
                         position_value = size * market_data['price'] / self.strategy.leverage
@@ -389,6 +410,7 @@ class XRPHedgeBot:
                         
                         # Update strategy with new leverage
                         self.strategy.leverage = adjusted_leverage
+                        logger.info(f"Dynamic leverage adjusted to {adjusted_leverage}x")
                 except Exception as e:
                     logger.warning(f"Dynamic leverage adjustment failed: {e}")
             
@@ -409,8 +431,9 @@ class XRPHedgeBot:
             # Send Telegram notification
             if self.telegram:
                 try:
-                    # Get current price for notification
-                    market_data = self.get_market_data(symbol)
+                    # Reuse market_data if available to avoid another API call
+                    if not market_data:
+                        market_data = self.get_market_data(symbol)
                     price = market_data['price'] if market_data else 0
                     self.telegram.notify_trade(action, side, size, price, reason)
                 except Exception as e:
@@ -418,13 +441,16 @@ class XRPHedgeBot:
             
             return True
             
+        except ValueError as e:
+            logger.error(f"Validation error executing trade: {e}")
+            return False
         except Exception as e:
-            logger.error(f"Error executing trade: {e}")
+            logger.error(f"Error executing trade on {symbol}: {e}", exc_info=True)
             if self.telegram:
                 try:
-                    self.telegram.notify_error(f"Trade execution failed: {str(e)}")
-                except:
-                    pass
+                    self.telegram.notify_error(f"Trade execution failed for {symbol}: {str(e)}")
+                except Exception as telegram_error:
+                    logger.warning(f"Failed to send Telegram error notification: {telegram_error}")
             return False
     
     def save_trade_history(self, symbol: str, action: str, side: str, size: int, reason: str, order: Dict):
@@ -504,8 +530,9 @@ class XRPHedgeBot:
         try:
             logger.info("=== Starting trading cycle ===")
             
-            # Get account balance
+            # Get account balance (cached for this cycle)
             balance = self.get_account_balance()
+            cycle_start_time = time.time()
             
             # Determine trading pairs to process
             trading_symbols = Config.TRADING_PAIRS if Config._is_multi_pair else [Config.SYMBOL]
@@ -615,7 +642,7 @@ class XRPHedgeBot:
                                 logger.warning(f"Trade blocked for {symbol}: {reason}")
                                 continue
                         
-                        success = self.execute_trade(symbol, 'open', suggestion['side'], size, suggestion['reason'])
+                        success = self.execute_trade(symbol, 'open', suggestion['side'], size, suggestion['reason'], market_data)
                         if success:
                             self.strategy.reset_tracking()
                             self.recent_losses = 0
@@ -627,7 +654,7 @@ class XRPHedgeBot:
                         size = abs(position.get('currentQty', 0))
                         if size > 0:
                             pnl = float(position.get('unrealisedPnl', 0))
-                            success = self.execute_trade(symbol, 'close', suggestion['side'], size, suggestion['reason'])
+                            success = self.execute_trade(symbol, 'close', suggestion['side'], size, suggestion['reason'], market_data)
                             if success:
                                 self.strategy.reset_tracking()
                                 
@@ -652,7 +679,7 @@ class XRPHedgeBot:
                     if position:
                         hedge_size = self.strategy.calculate_hedge_size(position.get('currentQty', 0))
                         if hedge_size > 0:
-                            self.execute_trade(symbol, 'hedge', suggestion['side'], hedge_size, suggestion['reason'])
+                            self.execute_trade(symbol, 'hedge', suggestion['side'], hedge_size, suggestion['reason'], market_data)
             
             # Update statistics
             if Config._is_multi_pair:
@@ -676,6 +703,10 @@ class XRPHedgeBot:
                 except Exception as e:
                     logger.warning(f"Failed to get pair rankings: {e}")
             
+            # Log cycle performance metrics
+            cycle_duration = time.time() - cycle_start_time
+            logger.info(f"Cycle completed in {cycle_duration:.2f} seconds")
+            
             logger.info("=== Trading cycle complete ===\n")
             
         except Exception as e:
@@ -683,8 +714,8 @@ class XRPHedgeBot:
             if self.telegram:
                 try:
                     self.telegram.notify_error(f"Trading cycle error: {str(e)}")
-                except:
-                    pass
+                except Exception as telegram_error:
+                    logger.warning(f"Failed to send Telegram error notification: {telegram_error}")
     
     def run(self, interval: int = 60):
         """Run the bot continuously
@@ -694,6 +725,7 @@ class XRPHedgeBot:
         """
         logger.info(f"Starting bot with {interval}s interval...")
         self.running = True
+        self.start_time = datetime.now()
         
         try:
             while self.running:
@@ -722,12 +754,26 @@ class XRPHedgeBot:
                 except Exception as e:
                     logger.warning(f"Final Telegram notification failed: {e}")
             
+            # Cleanup resources
+            try:
+                if hasattr(self, 'client') and self.client:
+                    self.client.close()
+            except Exception as e:
+                logger.warning(f"Error closing client connection: {e}")
+            
             logger.info("Bot shutdown complete")
     
     def stop(self):
         """Stop the bot"""
         logger.info("Stopping bot...")
         self.running = False
+        
+        # Cleanup resources
+        try:
+            if hasattr(self, 'client') and self.client:
+                self.client.close()
+        except Exception as e:
+            logger.warning(f"Error closing client connection: {e}")
 
 
 def main():
