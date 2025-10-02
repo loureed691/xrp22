@@ -4,6 +4,30 @@ All notable changes to the XRP Hedge Bot project will be documented in this file
 
 ## [2.2.1] - 2025-01-XX
 
+### Fixed - Signal-Based Dynamic Allocation 🎯
+
+**Fixed issue where strong signals couldn't get sufficient balance allocation**
+
+#### Problem
+- Bot detected strong signals (strength >= 70) but had insufficient balance to trade
+- Example: "Pair BBUSDTM has strong signal (strength: 75) but insufficient balance ($0.26)"
+- Allocation boost mechanism was too conservative to redistribute funds effectively
+
+#### Fixed
+- **Signal strength-based targeting**: Strong signals (>=70) now target 15% allocation (was 10%)
+- **More aggressive redistribution**: Can take up to 50% from idle pairs, 30% from active pairs (was 20%)
+- **Lower minimum reserves**: Pairs can be reduced to 5% minimum (was 10%)
+- **Position-aware redistribution**: Prioritizes taking from pairs without active positions
+- **Bug fix**: Corrected indentation in `allocate_to_best_pair()` method
+
+#### Impact
+- Strong signals now get adequate capital to execute trades
+- Better capital efficiency when high-confidence opportunities appear
+- Protects pairs with active positions from excessive redistribution
+- No configuration changes required - improvements work automatically
+
+See `SIGNAL_ALLOCATION_FIX.md` for detailed explanation and examples.
+
 ### Major - Unified Bot with Smart Auto-Detection 🎯
 
 **The bot is now fully unified with intelligent feature detection!**

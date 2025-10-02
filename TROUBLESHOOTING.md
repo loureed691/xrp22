@@ -165,6 +165,73 @@ Common issues and solutions for the XRP Hedge Bot.
 3. Check if funds are locked in open orders
 4. Close unused positions
 
+### Strong Signal But Insufficient Balance (Multi-Pair Trading)
+**Error:** `Pair BBUSDTM has strong signal (strength: 75) but insufficient balance ($0.26)`
+
+**What It Means:**
+- Bot detected a strong trading opportunity (signal strength >= 60)
+- But the pair didn't have enough allocated balance to trade
+- Bot attempted to redistribute funds from other pairs
+
+**Solutions:**
+
+1. **Automatic (Fixed in v2.2.1+)**
+   - Strong signals (>=70) automatically get 15% allocation
+   - Bot can take up to 50% from idle pairs
+   - Should resolve automatically in most cases
+
+2. **Check Total Balance**
+   - Ensure you have sufficient total balance
+   - Minimum: $25 per position (configurable via `MIN_POSITION_VALUE_USD`)
+   - Recommended: $100+ for multi-pair trading
+
+3. **Reduce Number of Pairs**
+   ```env
+   # Instead of 10+ pairs, use 3-5
+   TRADING_PAIRS=XRPUSDTM,BTCUSDTM,ETHUSDTM
+   ALLOCATION_STRATEGY=best
+   ```
+
+4. **Adjust Allocation Strategy**
+   ```env
+   # 'best' focuses on most profitable pair
+   ALLOCATION_STRATEGY=best
+   
+   # 'equal' splits evenly (may be too thin)
+   ALLOCATION_STRATEGY=equal
+   ```
+
+5. **Check Logs for Redistribution**
+   - Look for: "Redistributed $X from PAIR1 to PAIR2"
+   - If no redistribution: pairs may all have active positions
+   - Wait for positions to close, then funds can be reallocated
+
+6. **Increase Balance Reserve Settings**
+   ```env
+   # Reduce reserve to allow more trading
+   MIN_BALANCE_RESERVE_PERCENT=10  # Default: 20
+   
+   # Allow larger positions
+   MAX_POSITION_SIZE_PERCENT_NEW=50  # Default: 40
+   ```
+
+**Why This Happens:**
+- With many trading pairs, balance gets split too thin
+- If all pairs have positions, no funds available to redistribute
+- Each pair needs minimum balance to meet exchange requirements
+
+**Best Practice:**
+- Use 'best' allocation strategy for multi-pair trading
+- Keep total pairs under 10
+- Ensure total balance is at least `MIN_POSITION_VALUE_USD × 5`
+- Let bot track performance and automatically select best pairs
+2. Transfer to Futures account:
+   - KuCoin UI → Assets → Transfer
+   - From: Main Account
+   - To: Futures Account
+3. Check if funds are locked in open orders
+4. Close unused positions
+
 ## Performance Issues
 
 ### Bot Running Slow
