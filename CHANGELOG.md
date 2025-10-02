@@ -2,6 +2,84 @@
 
 All notable changes to the XRP Hedge Bot project will be documented in this file.
 
+## [2.0.0] - 2024-12-XX
+
+### Added - Major Feature Release
+- **Web Dashboard**: Real-time monitoring dashboard with Flask
+  - Live status updates, balance tracking, and performance metrics
+  - Position overview across all trading pairs
+  - Recent trade history with auto-refresh
+  - Accessible at http://localhost:5000 (configurable)
+
+- **Multiple Trading Pairs**: Support for trading multiple pairs simultaneously
+  - Configurable via TRADING_PAIRS environment variable
+  - Three allocation strategies: equal, weighted, dynamic
+  - Independent signal generation for each pair
+  - Per-pair position tracking and statistics
+
+- **ML-Based Signal Generation**: Advanced machine learning ensemble
+  - Momentum model for trend detection
+  - Volatility model for risk adaptation
+  - MA crossover model for trend changes
+  - Mean reversion model for extremes
+  - Ensemble voting for robust predictions
+
+- **Backtesting Framework**: Test strategies on historical data
+  - Run backtests with custom parameters
+  - Compare different leverage strategies
+  - Detailed performance metrics (ROI, win rate, drawdown)
+  - Save results to JSON for analysis
+
+- **Telegram Notifications**: Real-time alerts via Telegram
+  - Trade execution notifications
+  - P&L updates
+  - Strong signal alerts
+  - Error notifications
+  - Bot startup/shutdown messages
+
+- **Portfolio Diversification**: Intelligent position management
+  - Automatic correlation analysis between pairs
+  - Optimal position sizing for diversification
+  - Rebalancing suggestions
+  - Portfolio health metrics
+
+- **Dynamic Leverage Adjustment**: Adaptive leverage based on conditions
+  - Volatility-based adjustment
+  - Performance-based adjustment (reduce after losses)
+  - Signal strength consideration
+  - Risk-adjusted leverage calculation
+
+### New Files
+- `bot_enhanced.py`: Enhanced bot with all new features
+- `web_dashboard.py`: Web dashboard module
+- `telegram_notifier.py`: Telegram notification system
+- `ml_signals.py`: ML-based signal generation
+- `multi_pair.py`: Multiple trading pairs manager
+- `dynamic_leverage.py`: Dynamic leverage adjuster
+- `portfolio_diversification.py`: Portfolio management
+- `backtesting.py`: Backtesting framework
+- `run_backtest.py`: Backtesting script
+- `templates/dashboard.html`: Web dashboard UI
+
+### Changed
+- Updated `config.py` to support new features
+- Updated `.env.example` with new configuration options
+- Enhanced `requirements.txt` with Flask dependency
+- Expanded README.md with advanced features documentation
+
+### Configuration
+New environment variables:
+- `ENABLE_WEB_DASHBOARD`: Enable web dashboard (default: false)
+- `WEB_DASHBOARD_PORT`: Dashboard port (default: 5000)
+- `TELEGRAM_BOT_TOKEN`: Telegram bot token
+- `TELEGRAM_CHAT_ID`: Telegram chat ID
+- `USE_ML_SIGNALS`: Enable ML signals (default: false)
+- `ENABLE_DYNAMIC_LEVERAGE`: Enable dynamic leverage (default: false)
+- `MIN_LEVERAGE`: Minimum leverage (default: 5)
+- `MAX_LEVERAGE`: Maximum leverage (default: 20)
+- `TRADING_PAIRS`: Comma-separated trading pairs
+- `ALLOCATION_STRATEGY`: Allocation strategy (equal/weighted/dynamic)
+
 ## [1.0.1] - 2024-10-02
 
 ### Fixed
@@ -98,12 +176,12 @@ All notable changes to the XRP Hedge Bot project will be documented in this file
 - `run_bot.bat`: Windows bot launcher
 - `run_demo.bat`: Windows demo launcher
 
-### Known Limitations
-- Currently XRP/USDT only (XRPUSDTM)
+### Known Limitations (v1.x)
+- ~~Currently XRP/USDT only (XRPUSDTM)~~ - Now supports multiple pairs in v2.0
 - 60-second minimum cycle time
-- No web dashboard (planned for future)
-- No backtesting framework yet (planned)
-- Single trading pair at a time
+- ~~No web dashboard (planned for future)~~ - Added in v2.0
+- ~~No backtesting framework yet (planned)~~ - Added in v2.0
+- ~~Single trading pair at a time~~ - Multiple pairs supported in v2.0
 
 ### Requirements
 - Python 3.11 or higher
@@ -113,23 +191,25 @@ All notable changes to the XRP Hedge Bot project will be documented in this file
 - Internet connection
 - API credentials with Futures trading permission
 
-### Dependencies
+### Dependencies (v2.0)
 - python-dotenv >= 1.0.0
 - pandas >= 2.0.0
 - numpy >= 1.24.0
 - ta >= 0.11.0
 - requests >= 2.31.0
 - python-dateutil >= 2.8.2
+- flask >= 3.0.0
 
 ## [Unreleased]
 
 ### Planned Features
-- [ ] Web dashboard for monitoring
-- [ ] Multiple trading pairs simultaneously
-- [ ] Advanced ML-based signal generation
-- [ ] Backtesting framework
-- [ ] Telegram/Discord notifications
-- [ ] Portfolio diversification
+- [x] Web dashboard for monitoring - **Released in v2.0**
+- [x] Multiple trading pairs simultaneously - **Released in v2.0**
+- [x] Advanced ML-based signal generation - **Released in v2.0**
+- [x] Backtesting framework - **Released in v2.0**
+- [x] Telegram/Discord notifications - **Released in v2.0**
+- [x] Portfolio diversification - **Released in v2.0**
+- [x] Dynamic leverage adjustment - **Released in v2.0**
 - [ ] Dynamic leverage adjustment
 - [ ] WebSocket for real-time updates
 - [ ] Database for persistent storage
