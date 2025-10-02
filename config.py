@@ -35,6 +35,18 @@ class Config:
     EMA_LONG = int(os.getenv('EMA_LONG', 26))
     MACD_SIGNAL = int(os.getenv('MACD_SIGNAL', 9))
     
+    # New Features
+    USE_ML_SIGNALS = os.getenv('USE_ML_SIGNALS', 'false').lower() == 'true'
+    ENABLE_WEB_DASHBOARD = os.getenv('ENABLE_WEB_DASHBOARD', 'false').lower() == 'true'
+    WEB_DASHBOARD_PORT = int(os.getenv('WEB_DASHBOARD_PORT', 5000))
+    TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+    TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
+    ENABLE_DYNAMIC_LEVERAGE = os.getenv('ENABLE_DYNAMIC_LEVERAGE', 'false').lower() == 'true'
+    MIN_LEVERAGE = int(os.getenv('MIN_LEVERAGE', 5))
+    MAX_LEVERAGE = int(os.getenv('MAX_LEVERAGE', 20))
+    TRADING_PAIRS = os.getenv('TRADING_PAIRS', 'XRPUSDTM').split(',')
+    ALLOCATION_STRATEGY = os.getenv('ALLOCATION_STRATEGY', 'equal')  # equal, weighted, dynamic
+    
     # API Endpoints
     API_URL = 'https://api-futures.kucoin.com' if not USE_TESTNET else 'https://api-sandbox-futures.kucoin.com'
     
