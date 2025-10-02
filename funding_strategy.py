@@ -182,6 +182,16 @@ class FundingStrategy:
         if self.min_position_value_usd > 0 and position_value < self.min_position_value_usd:
             logger.info(f"Position value ${position_value:.2f} is below minimum ${self.min_position_value_usd:.2f}")
             
+            # Check if minimum position value would exceed max position size
+            max_position_value = available_funds * (self.max_position_size_percent / 100)
+            if self.min_position_value_usd > max_position_value:
+                logger.warning(f"Minimum position value ${self.min_position_value_usd:.2f} exceeds maximum allowed ${max_position_value:.2f} ({self.max_position_size_percent}% of ${available_funds:.2f})")
+                # Calculate minimum balance needed
+                min_required_funds = self.min_position_value_usd / (self.max_position_size_percent / 100)
+                min_required_balance = min_required_funds / (1 - self.min_balance_reserve_percent / 100)
+                logger.warning(f"Need at least ${min_required_balance:.2f} balance to trade with these settings")
+                return 0
+            
             # Check if we have enough balance to meet minimum
             min_required_balance = self.min_position_value_usd / (1 - self.min_balance_reserve_percent / 100)
             if available_balance < min_required_balance:

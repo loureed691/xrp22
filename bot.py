@@ -616,7 +616,33 @@ class XRPHedgeBot:
                             self.strategy.reset_tracking()
                             self.recent_losses = 0
                     else:
-                        logger.info(f"Position size is 0 for {symbol} - insufficient balance or position value below minimum")
+                        # Get more specific information about why size is 0
+                        if self.funding_strategy:
+                            available_funds = self.funding_strategy.calculate_available_funds(pair_balance)
+                            min_required = self.funding_strategy.min_position_value_usd
+                            min_required_balance = min_required / (1 - self.funding_strategy.min_balance_reserve_percent / 100)
+                            max_position_value = available_funds * (self.funding_strategy.max_position_size_percent / 100)
+                            
+                            if min_required > max_position_value and available_funds > 1:
+                                # Case: minimum position value exceeds maximum allowed position size
+                                min_required_funds = min_required / (self.funding_strategy.max_position_size_percent / 100)
+                                min_required_balance_for_settings = min_required_funds / (1 - self.funding_strategy.min_balance_reserve_percent / 100)
+                                logger.warning(f"Cannot open position for {symbol}: "
+                                             f"Balance ${pair_balance:.2f} insufficient. "
+                                             f"Need at least ${min_required_balance_for_settings:.2f} to meet minimum position value "
+                                             f"of ${min_required:.2f} with {self.funding_strategy.max_position_size_percent}% max position size")
+                            elif pair_balance < min_required_balance:
+                                logger.warning(f"Cannot open position for {symbol}: "
+                                             f"Balance ${pair_balance:.2f} is below minimum required ${min_required_balance:.2f} "
+                                             f"(to meet ${min_required:.2f} minimum position value with {self.funding_strategy.min_balance_reserve_percent}% reserve)")
+                            elif available_funds <= 1:
+                                logger.warning(f"Cannot open position for {symbol}: "
+                                             f"After {self.funding_strategy.min_balance_reserve_percent}% reserve, "
+                                             f"available funds ${available_funds:.2f} is insufficient")
+                            else:
+                                logger.info(f"Position size is 0 for {symbol} - calculated position value is below minimum")
+                        else:
+                            logger.warning(f"Cannot open position for {symbol}: Balance ${pair_balance:.2f} is insufficient")
                         
                 elif suggestion['action'] == 'close':
                     if position:

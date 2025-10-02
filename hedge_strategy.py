@@ -208,13 +208,6 @@ class HedgeStrategy:
         Returns:
             dict with 'action', 'side', 'size', 'reason', 'confidence'
         """
-        if available_balance <= 1:
-            return {
-                'action': 'none',
-                'reason': 'Insufficient balance',
-                'confidence': 0
-            }
-        
         current_qty = 0
         if current_position:
             current_qty = current_position.get('currentQty', 0)
