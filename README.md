@@ -100,6 +100,8 @@ pip install -r requirements.txt
 
 ## Configuration
 
+The bot now features **smart auto-detection** that automatically enables advanced features based on your configuration!
+
 Edit the `.env` file to customize bot behavior:
 
 ### Basic Configuration
@@ -122,27 +124,44 @@ TAKE_PROFIT_PERCENT=8         # Take profit at 8% gain
 TRAILING_STOP_PERCENT=3       # Trail stop 3% from peak
 ```
 
-### Advanced Features Configuration
-```env
-# Web Dashboard (optional)
-ENABLE_WEB_DASHBOARD=true     # Enable web dashboard
-WEB_DASHBOARD_PORT=5000       # Dashboard port
+### Advanced Features - Smart Auto-Detection! 🎯
 
-# Telegram Notifications (optional)
+The bot automatically enables features based on your configuration:
+
+#### Telegram Notifications
+**Auto-enabled when both values are provided:**
+```env
 TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
+```
+✓ Simply provide your credentials and notifications are automatically enabled!
 
-# ML-Based Signals (optional)
-USE_ML_SIGNALS=true           # Enable ML signal generation
+#### Multiple Trading Pairs
+**Auto-enabled when multiple pairs are specified:**
+```env
+TRADING_PAIRS=XRPUSDTM,BTCUSDTM,ETHUSDTM  # Comma-separated
+ALLOCATION_STRATEGY=  # Leave blank for auto-detection (uses 'best' for multi-pair)
+```
+✓ Bot automatically uses 'best' strategy to trade only the most profitable pair!
 
-# Dynamic Leverage (optional)
-ENABLE_DYNAMIC_LEVERAGE=true  # Enable dynamic leverage adjustment
-MIN_LEVERAGE=5                # Minimum leverage
-MAX_LEVERAGE=20               # Maximum leverage
+#### Dynamic Leverage
+**Auto-enabled when leverage range is different from base:**
+```env
+ENABLE_DYNAMIC_LEVERAGE=auto  # or true/false
+MIN_LEVERAGE=5
+MAX_LEVERAGE=20
+```
+✓ Set to 'auto' and the bot will enable it if your min/max differ from base leverage!
 
-# Multiple Trading Pairs (optional)
-TRADING_PAIRS=XRPUSDTM,BTCUSDTM  # Comma-separated pairs
-ALLOCATION_STRATEGY=dynamic      # equal, weighted, or dynamic
+#### ML-Based Signals (Optional)
+```env
+USE_ML_SIGNALS=true  # Explicitly enable ML signals
+```
+
+#### Web Dashboard (Optional)
+```env
+ENABLE_WEB_DASHBOARD=true
+WEB_DASHBOARD_PORT=5000
 ```
 
 # Technical Indicators
@@ -156,27 +175,23 @@ MACD_SIGNAL=9
 
 ## Usage
 
-### Standard Bot
-Start the standard bot:
+### Unified Bot (Automatic Feature Detection)
+Start the bot - it automatically adapts to your configuration:
 ```bash
 python bot.py
 ```
 
-### Enhanced Bot (with all new features)
-Start the enhanced bot with advanced features:
-```bash
-python bot_enhanced.py
-```
-
 The bot will:
-1. Connect to KuCoin Futures API
-2. Analyze market conditions every 60 seconds
-3. Generate trading signals (traditional + ML if enabled)
-4. Execute trades automatically based on strategy
-5. Monitor positions and manage risk
-6. Track portfolio diversification
-7. Adjust leverage dynamically (if enabled)
-8. Send notifications via Telegram (if configured)
+1. **Auto-detect enabled features** from your .env configuration
+2. Connect to KuCoin Futures API
+3. Analyze market conditions every 60 seconds
+4. Generate trading signals (traditional + ML if enabled)
+5. Execute trades automatically based on strategy
+6. Monitor positions and manage risk
+7. Track portfolio diversification (if multi-pair enabled)
+8. Adjust leverage dynamically (if enabled)
+9. Send notifications via Telegram (if configured)
+10. Provide web dashboard (if enabled)
 
 ### Web Dashboard
 If enabled, access the web dashboard at:
@@ -326,10 +341,9 @@ The bot includes multiple layers of risk protection:
 
 ```
 xrp22/
-├── bot.py                      # Main bot execution (standard)
-├── bot_enhanced.py             # Enhanced bot with all features
+├── bot.py                      # Unified bot with smart auto-detection (run this!)
+├── config.py                   # Configuration with auto-detection logic
 ├── run_backtest.py             # Backtesting script
-├── config.py                   # Configuration management
 ├── kucoin_client.py            # KuCoin API client
 ├── technical_analysis.py       # Technical indicators
 ├── hedge_strategy.py           # Trading strategy logic

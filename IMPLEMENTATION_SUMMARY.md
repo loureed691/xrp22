@@ -200,21 +200,37 @@ MAX_LEVERAGE=20
 
 ---
 
-## Enhanced Bot Integration
+## Unified Bot with Smart Auto-Detection (v2.1)
 
-### Main Bot (`bot_enhanced.py`)
-Created a new enhanced bot that integrates all features:
+### Main Bot (`bot.py`)
+The bot has been unified with smart auto-detection of features:
 
-**Capabilities:**
-- Uses all new modules seamlessly
-- Configurable feature toggling
-- Maintains backward compatibility
-- Comprehensive logging
-- Error handling and recovery
+**Key Improvements:**
+- **Smart Auto-Detection**: Automatically enables features based on configuration
+  - Telegram: Auto-enabled when both token and chat_id are provided
+  - Multi-pair: Auto-enabled when multiple pairs are specified
+  - Dynamic leverage: Auto-enabled when MIN/MAX differ from base leverage
+- **Single Entry Point**: One bot file instead of two (bot.py and bot_enhanced.py)
+- **Graceful Degradation**: Works with or without advanced modules
+- **Backward Compatible**: Existing configurations still work
+- **Comprehensive Logging**: Shows which features are enabled at startup
+- **Error Handling**: Continues running even if some advanced features fail
 
 **Run Command:**
 ```bash
-python bot_enhanced.py
+python bot.py  # Works for both simple and advanced configurations!
+```
+
+**Feature Summary at Startup:**
+The bot displays enabled features when starting:
+```
+Enabled features:
+  ✓ Telegram notifications
+  ✓ ML-based signals
+  ✓ Web dashboard (port 5000)
+  ✓ Dynamic leverage (5x-20x)
+  ✓ Multi-pair trading (3 pairs, best strategy)
+  ✓ Intelligent funding strategy
 ```
 
 ---
@@ -236,7 +252,7 @@ python bot_enhanced.py
 
 ## Code Statistics
 
-### New Files Created: 13
+### New Files Created: 12
 1. `web_dashboard.py`
 2. `templates/dashboard.html`
 3. `telegram_notifier.py`
@@ -245,18 +261,21 @@ python bot_enhanced.py
 6. `dynamic_leverage.py`
 7. `portfolio_diversification.py`
 8. `backtesting.py`
-9. `bot_enhanced.py`
-10. `run_backtest.py`
-11. `demo_advanced.py`
-12. `ADVANCED_FEATURES.md`
-13. `IMPLEMENTATION_SUMMARY.md`
+9. `run_backtest.py`
+10. `demo_advanced.py`
+11. `ADVANCED_FEATURES.md`
+12. `IMPLEMENTATION_SUMMARY.md`
 
-### Files Modified: 4
-1. `config.py` - Added new configuration options
-2. `requirements.txt` - Added Flask dependency
-3. `.env.example` - Added new environment variables
-4. `README.md` - Updated documentation
-5. `CHANGELOG.md` - Added v2.0 changelog
+### Files Modified: 5
+1. `bot.py` - Unified with smart auto-detection (major update in v2.1)
+2. `config.py` - Added smart auto-detection logic (updated in v2.1)
+3. `requirements.txt` - Added Flask dependency
+4. `.env.example` - Added smart auto-detection comments (updated in v2.1)
+5. `README.md` - Updated documentation (updated in v2.1)
+6. `CHANGELOG.md` - Added v2.0 changelog
+
+### Files Removed: 1
+1. `bot_enhanced.py` - Merged into unified bot.py (v2.1)
 
 ### Lines of Code Added: ~6300+
 
@@ -340,46 +359,69 @@ TELEGRAM_CHAT_ID=your_chat_id
 
 ## Migration Guide
 
-### From v1.x to v2.0
+### From v1.x to v2.0/v2.1
 
-#### Option 1: Keep Using v1.0
+#### Simple Migration (Recommended)
 ```bash
-python bot.py  # Original bot still works
+python bot.py  # Now works for all configurations!
 ```
 
-#### Option 2: Use v2.0 with v1.0 Configuration
-```bash
-python bot_enhanced.py  # Works with existing .env
-```
-All new features are opt-in, so existing configs work without changes.
+The unified bot automatically detects and enables features based on your `.env` configuration.
 
-#### Option 3: Full v2.0 Features
-1. Update `.env` with new options
-2. Install dependencies: `pip install -r requirements.txt`
-3. Run: `python bot_enhanced.py`
-4. Access dashboard: http://localhost:5000
+**No changes needed to existing configurations!** The bot will:
+- Use basic mode if no advanced features are configured
+- Auto-enable features as you add configuration
+- Show enabled features at startup
+
+#### Enable Advanced Features
+Simply update your `.env` file:
+
+1. **Add Telegram** (auto-enabled when both provided):
+   ```env
+   TELEGRAM_BOT_TOKEN=your_token
+   TELEGRAM_CHAT_ID=your_chat_id
+   ```
+
+2. **Add Multiple Pairs** (auto-enabled and uses 'best' strategy):
+   ```env
+   TRADING_PAIRS=XRPUSDTM,BTCUSDTM,ETHUSDTM
+   ```
+
+3. **Enable Dynamic Leverage** (auto-enabled if range differs):
+   ```env
+   ENABLE_DYNAMIC_LEVERAGE=auto  # or true
+   MIN_LEVERAGE=5
+   MAX_LEVERAGE=20
+   ```
+
+4. **Enable Other Features**:
+   ```env
+   USE_ML_SIGNALS=true
+   ENABLE_WEB_DASHBOARD=true
+   ```
+
+Then just run: `python bot.py`
 
 ---
 
 ## Best Practices
 
 ### For Beginners
-1. Start with standard bot (`bot.py`)
+1. Start with basic configuration (single pair, no advanced features)
 2. Test on testnet
-3. Enable web dashboard for monitoring
-4. Add Telegram for alerts
-5. Use single trading pair initially
+3. Gradually enable features as you get comfortable
+4. Enable web dashboard for monitoring
+5. Add Telegram for alerts
 
 ### For Intermediate Users
-1. Use enhanced bot (`bot_enhanced.py`)
-2. Enable ML signals
-3. Add 2-3 trading pairs
-4. Use dynamic allocation
-5. Run backtests before changes
+1. Enable ML signals for better predictions
+2. Add 2-3 trading pairs with auto 'best' strategy
+3. Configure Telegram notifications
+4. Run backtests before changes
 
 ### For Advanced Users
 1. Enable all features
-2. Use multiple pairs (3-5)
+2. Use multiple pairs (3-5) with dynamic allocation
 3. Enable dynamic leverage
 4. Monitor diversification
 5. Regular backtesting
@@ -390,8 +432,8 @@ All new features are opt-in, so existing configs work without changes.
 ## Performance Considerations
 
 ### Resource Usage
-- **Standard Bot**: Minimal (10-20 MB RAM)
-- **Enhanced Bot**: Moderate (50-100 MB RAM)
+- **Basic Mode**: Minimal (10-20 MB RAM)
+- **With ML Signals**: Moderate (50-100 MB RAM)
 - **Web Dashboard**: Low (additional 20-30 MB)
 - **Multiple Pairs**: Scales linearly
 
