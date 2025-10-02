@@ -409,7 +409,9 @@ class MultiPairManager:
                 reserve_per_pair = reserve_amount / len(other_pairs)
                 for pair in other_pairs:
                     allocations[pair] = reserve_per_pair
-        else:
+            else:
+                # Only one trading pair, allocate full balance to best pair
+                allocations[best_pair] = total_balance
             # No trading history, use equal allocation as fallback
             logger.info("No trading history yet, using equal allocation as fallback")
             balance_per_pair = total_balance / len(self.trading_pairs)
