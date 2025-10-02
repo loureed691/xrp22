@@ -459,7 +459,7 @@ class EnhancedXRPBot:
                 if suggestion['action'] == 'open' and pair_balance > 0:
                     # Calculate volatility and win rate for intelligent sizing
                     volatility = self.calculate_volatility(market_data['klines'])
-                    win_rate = (self.winning_trades / max(1, self.winning_trades + self.losing_trades)) * 100
+                    win_rate = self.calculate_win_rate()
                     
                     # Calculate total value of existing positions
                     existing_positions_value = sum(
