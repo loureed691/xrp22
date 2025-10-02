@@ -615,6 +615,8 @@ class XRPHedgeBot:
                         if success:
                             self.strategy.reset_tracking()
                             self.recent_losses = 0
+                    else:
+                        logger.info(f"Position size is 0 for {symbol} - insufficient balance or position value below minimum")
                         
                 elif suggestion['action'] == 'close':
                     if position:
