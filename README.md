@@ -1,9 +1,10 @@
 # XRP Futures Hedge Trading Bot
 
-A sophisticated, automated trading bot for KuCoin XRP futures with 11x leverage, featuring intelligent hedge strategies and risk management.
+A sophisticated, automated trading bot for KuCoin XRP futures with 11x leverage, featuring intelligent hedge strategies, ML-based signals, and advanced risk management.
 
 ## Features
 
+### Core Features
 - **11x Leverage Trading**: Maximizes potential returns with controlled risk
 - **Hedge Strategy**: Automatically opens counter-positions to protect against adverse movements
 - **Multiple Technical Indicators**: RSI, MACD, EMA, Bollinger Bands, ATR
@@ -12,6 +13,15 @@ A sophisticated, automated trading bot for KuCoin XRP futures with 11x leverage,
 - **Auto-Reinvestment**: Automatically reinvests all profits to compound gains
 - **Comprehensive Logging**: Detailed logs of all trades and decisions
 - **Trade History**: JSON log of all executed trades
+
+### Advanced Features (NEW!)
+- **🌐 Web Dashboard**: Real-time monitoring dashboard with trade history and performance metrics
+- **📊 Multiple Trading Pairs**: Trade multiple pairs simultaneously with intelligent allocation
+- **🤖 ML-Based Signals**: Advanced machine learning ensemble for signal generation
+- **📈 Backtesting Framework**: Test strategies on historical data before live trading
+- **📱 Telegram Notifications**: Real-time trade alerts and P&L updates via Telegram
+- **💼 Portfolio Diversification**: Automatic correlation analysis and position sizing
+- **⚡ Dynamic Leverage**: Adjust leverage based on market conditions and risk
 
 ## Technical Indicators Used
 
@@ -79,6 +89,7 @@ pip install -r requirements.txt
 
 Edit the `.env` file to customize bot behavior:
 
+### Basic Configuration
 ```env
 # API Credentials
 KUCOIN_API_KEY=your_api_key
@@ -96,6 +107,30 @@ MAX_POSITION_SIZE_PERCENT=80  # Use 80% of balance per trade
 STOP_LOSS_PERCENT=5           # Exit if loss exceeds 5%
 TAKE_PROFIT_PERCENT=8         # Take profit at 8% gain
 TRAILING_STOP_PERCENT=3       # Trail stop 3% from peak
+```
+
+### Advanced Features Configuration
+```env
+# Web Dashboard (optional)
+ENABLE_WEB_DASHBOARD=true     # Enable web dashboard
+WEB_DASHBOARD_PORT=5000       # Dashboard port
+
+# Telegram Notifications (optional)
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+
+# ML-Based Signals (optional)
+USE_ML_SIGNALS=true           # Enable ML signal generation
+
+# Dynamic Leverage (optional)
+ENABLE_DYNAMIC_LEVERAGE=true  # Enable dynamic leverage adjustment
+MIN_LEVERAGE=5                # Minimum leverage
+MAX_LEVERAGE=20               # Maximum leverage
+
+# Multiple Trading Pairs (optional)
+TRADING_PAIRS=XRPUSDTM,BTCUSDTM  # Comma-separated pairs
+ALLOCATION_STRATEGY=dynamic      # equal, weighted, or dynamic
+```
 
 # Technical Indicators
 RSI_PERIOD=14
@@ -108,18 +143,53 @@ MACD_SIGNAL=9
 
 ## Usage
 
-### Start the bot:
+### Standard Bot
+Start the standard bot:
 ```bash
 python bot.py
+```
+
+### Enhanced Bot (with all new features)
+Start the enhanced bot with advanced features:
+```bash
+python bot_enhanced.py
 ```
 
 The bot will:
 1. Connect to KuCoin Futures API
 2. Analyze market conditions every 60 seconds
-3. Generate trading signals based on technical analysis
+3. Generate trading signals (traditional + ML if enabled)
 4. Execute trades automatically based on strategy
 5. Monitor positions and manage risk
-6. Reinvest all profits automatically
+6. Track portfolio diversification
+7. Adjust leverage dynamically (if enabled)
+8. Send notifications via Telegram (if configured)
+
+### Web Dashboard
+If enabled, access the web dashboard at:
+```
+http://localhost:5000
+```
+
+The dashboard shows:
+- Real-time bot status
+- Current balance and P&L
+- Win rate and trade statistics
+- Active positions
+- Recent trade history
+
+### Backtesting
+Run backtests on historical data:
+```bash
+# Basic backtest
+python run_backtest.py
+
+# Custom parameters
+python run_backtest.py --balance 100 --leverage 11 --days 30
+
+# Compare strategies
+python run_backtest.py --compare
+```
 
 ### Stop the bot:
 - Press `Ctrl+C` to safely stop the bot
@@ -143,6 +213,54 @@ The bot opens counter-positions to protect against losses:
 - If a short position is losing >2%, opens a long hedge
 - Hedge size is 50% of the original position
 
+## Advanced Features Guide
+
+### Web Dashboard
+The web dashboard provides real-time monitoring:
+- **Status Overview**: Bot running status, current balance, total profit
+- **Performance Metrics**: Win rate, total trades, profit percentage
+- **Position Tracking**: View all active positions across trading pairs
+- **Trade History**: Recent trade log with timestamps and reasons
+- **Auto-refresh**: Updates every 5 seconds automatically
+
+### ML-Based Signals
+The ML signal generator uses ensemble methods:
+- **Momentum Model**: Analyzes price momentum and acceleration
+- **Volatility Model**: Adapts to market volatility conditions
+- **MA Crossover Model**: Detects trend changes
+- **Mean Reversion Model**: Identifies oversold/overbought extremes
+- **Ensemble Voting**: Combines all models for robust predictions
+
+### Multiple Trading Pairs
+Trade multiple pairs simultaneously:
+- **Equal Allocation**: Split balance equally across all pairs
+- **Weighted Allocation**: Allocate based on historical performance
+- **Dynamic Allocation**: Adjust allocations based on recent results
+- **Correlation Analysis**: Avoid highly correlated positions
+- **Independent Signals**: Each pair analyzed separately
+
+### Portfolio Diversification
+Automatic portfolio management:
+- **Correlation Tracking**: Monitor price correlation between pairs
+- **Position Sizing**: Optimize position sizes for diversification
+- **Rebalancing**: Suggestions to improve portfolio balance
+- **Risk Spreading**: Prevent over-concentration in single asset
+
+### Dynamic Leverage
+Leverage adjusts based on conditions:
+- **Volatility-based**: Lower leverage in high volatility
+- **Performance-based**: Reduce leverage after consecutive losses
+- **Signal-based**: Higher leverage with strong signals
+- **Risk-adjusted**: Consider account balance and exposure
+
+### Telegram Notifications
+Stay informed with real-time alerts:
+- Trade executions (open, close, hedge)
+- Significant P&L updates
+- Strong trading signals
+- Error notifications
+- Bot startup/shutdown messages
+
 ## Risk Management
 
 - **Maximum Position Size**: 80% of available balance
@@ -155,18 +273,29 @@ The bot opens counter-positions to protect against losses:
 
 ```
 xrp22/
-├── bot.py                 # Main bot execution
-├── config.py              # Configuration management
-├── kucoin_client.py       # KuCoin API client
-├── technical_analysis.py  # Technical indicators
-├── hedge_strategy.py      # Trading strategy logic
-├── requirements.txt       # Python dependencies
-├── .env.example          # Environment template
-├── .env                  # Your configuration (create this)
-├── .gitignore            # Git ignore rules
-├── bot.log               # Bot execution log
+├── bot.py                      # Main bot execution (standard)
+├── bot_enhanced.py             # Enhanced bot with all features
+├── run_backtest.py             # Backtesting script
+├── config.py                   # Configuration management
+├── kucoin_client.py            # KuCoin API client
+├── technical_analysis.py       # Technical indicators
+├── hedge_strategy.py           # Trading strategy logic
+├── web_dashboard.py            # Web dashboard module
+├── telegram_notifier.py        # Telegram notifications
+├── ml_signals.py               # ML-based signal generation
+├── multi_pair.py               # Multiple trading pairs manager
+├── dynamic_leverage.py         # Dynamic leverage adjuster
+├── portfolio_diversification.py # Portfolio management
+├── backtesting.py              # Backtesting framework
+├── requirements.txt            # Python dependencies
+├── .env.example               # Environment template
+├── .env                       # Your configuration (create this)
+├── .gitignore                 # Git ignore rules
+├── bot.log                    # Bot execution log
+├── templates/
+│   └── dashboard.html         # Web dashboard HTML
 └── bot_data/
-    └── trade_history.jsonl  # Trade history log
+    └── trade_history.jsonl    # Trade history log
 ```
 
 ## Monitoring
@@ -254,11 +383,20 @@ Contributions are welcome! Please:
 
 ## Roadmap
 
+Completed features (v2.0):
+- [x] Web dashboard for monitoring
+- [x] Multiple trading pairs
+- [x] Advanced ML-based signals
+- [x] Backtesting framework
+- [x] Telegram notifications
+- [x] Portfolio diversification
+- [x] Dynamic leverage adjustment
+
 Future enhancements:
-- [ ] Web dashboard for monitoring
-- [ ] Multiple trading pairs
-- [ ] Advanced ML-based signals
-- [ ] Backtesting framework
-- [ ] Telegram notifications
-- [ ] Portfolio diversification
-- [ ] Dynamic leverage adjustment
+- [ ] WebSocket for real-time updates
+- [ ] Database for persistent storage
+- [ ] Paper trading mode
+- [ ] Custom strategy plugins
+- [ ] Mobile app integration
+- [ ] Advanced order types (limit, stop-limit)
+- [ ] Multi-exchange support
