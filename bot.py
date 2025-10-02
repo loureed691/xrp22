@@ -604,7 +604,7 @@ class XRPHedgeBot:
                         if self.funding_strategy:
                             position_value = size * market_data['price'] / self.strategy.leverage
                             should_allow, reason = self.funding_strategy.should_allow_trade(
-                                balance, position_value, self.recent_losses
+                                pair_balance, position_value, self.recent_losses
                             )
                             if not should_allow:
                                 logger.warning(f"Trade blocked for {symbol}: {reason}")

@@ -145,8 +145,11 @@ class FundingStrategy:
         # Calculate available funds after reserve
         available_funds = self.calculate_available_funds(available_balance)
         
-        if available_funds <= 1:
-            logger.warning(f"Insufficient funds: ${available_funds:.2f}")
+        # Calculate minimum funds needed for 1 contract
+        min_funds_needed = (current_price / leverage) if current_price > 0 else 1.0
+        
+        if available_funds < min_funds_needed:
+            logger.warning(f"Insufficient funds: ${available_funds:.2f} (need at least ${min_funds_needed:.2f} for 1 contract)")
             return 0
         
         # Calculate risk score
@@ -214,14 +217,17 @@ class FundingStrategy:
         Returns:
             Tuple of (should_allow, reason)
         """
-        # Check minimum balance
+        # Check minimum balance - must have enough for the proposed position
         available_funds = self.calculate_available_funds(available_balance)
-        if available_funds <= 1:
+        
+        # Instead of a fixed $1 check, verify we have enough for the position
+        # Allow trades as long as we have some funds available (even if less than $1)
+        if available_funds <= 0:
             return False, f"Insufficient funds after reserve: ${available_funds:.2f}"
         
-        # Check if position value is reasonable
-        if position_value > available_balance * (self.max_position_size_percent / 100):
-            return False, f"Position too large: ${position_value:.2f} exceeds {self.max_position_size_percent}% of balance"
+        # Check if position value is reasonable relative to available funds
+        if position_value > available_funds:
+            return False, f"Position too large: ${position_value:.2f} exceeds available funds ${available_funds:.2f}"
         
         # Check recent losses (circuit breaker)
         if recent_losses >= 5:
