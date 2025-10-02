@@ -34,6 +34,52 @@ class MultiPairManager:
         
         logger.info(f"Multi-pair manager initialized with {len(self.trading_pairs)} pairs: {', '.join(self.trading_pairs)}")
     
+    def validate_balance_config(self, total_balance: float) -> tuple[bool, str]:
+        """Validate if the current balance configuration is viable
+        
+        Args:
+            total_balance: Total available balance
+            
+        Returns:
+            Tuple of (is_valid, message)
+        """
+        # Calculate available balance after reserve
+        reserve_percent = Config.MIN_BALANCE_RESERVE_PERCENT / 100
+        available_balance = total_balance * (1 - reserve_percent)
+        
+        # Check if we can meet minimum position value
+        if Config.MIN_POSITION_VALUE_USD > 0:
+            min_required = Config.MIN_POSITION_VALUE_USD / (1 - reserve_percent)
+            
+            if total_balance < min_required:
+                msg = (f"Insufficient balance: ${total_balance:.2f} < ${min_required:.2f} required. "
+                       f"With {Config.MIN_BALANCE_RESERVE_PERCENT:.0f}% reserve and "
+                       f"${Config.MIN_POSITION_VALUE_USD:.2f} minimum position, you need at least "
+                       f"${min_required:.2f} total balance.")
+                return False, msg
+            
+            # Calculate how many positions we can support
+            max_positions = int(available_balance / Config.MIN_POSITION_VALUE_USD)
+            
+            if max_positions == 0:
+                msg = (f"Available balance ${available_balance:.2f} cannot support "
+                       f"even one ${Config.MIN_POSITION_VALUE_USD:.2f} position")
+                return False, msg
+            
+            # Warn if we have many pairs but limited capacity
+            if len(self.trading_pairs) > max_positions * 5:
+                msg = (f"Balance can support ~{max_positions} positions, but {len(self.trading_pairs)} pairs configured. "
+                       f"Consider reducing to {max_positions * 2}-{max_positions * 5} pairs for better performance.")
+                logger.warning(msg)
+                return True, msg  # Warning, but still valid
+            
+            msg = (f"Balance validated: ${total_balance:.2f} total, "
+                   f"${available_balance:.2f} available, "
+                   f"can support ~{max_positions} simultaneous ${Config.MIN_POSITION_VALUE_USD:.2f} positions")
+            return True, msg
+        
+        return True, f"Balance: ${total_balance:.2f} (no minimum position value enforced)"
+    
     def allocate_balance(self, total_balance: float, allocation_strategy: str = 'equal') -> Dict[str, float]:
         """Allocate balance across trading pairs
         
@@ -44,6 +90,13 @@ class MultiPairManager:
         Returns:
             Dict mapping pair symbols to allocated balance
         """
+        # Validate balance configuration
+        is_valid, msg = self.validate_balance_config(total_balance)
+        if not is_valid:
+            logger.error(msg)
+            raise ValueError(msg)
+        logger.info(msg)
+        
         allocations = {}
         
         if allocation_strategy == 'best':

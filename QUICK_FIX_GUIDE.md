@@ -1,7 +1,7 @@
 # Quick Fix Guide: Smart Fund Allocation with $25 Minimum Trade
 
 ## Your Situation
-- **Total Balance**: $120 USDT
+- **Total Balance**: $100-$120 USDT
 - **Problem**: Getting "Insufficient balance" errors
 - **Goal**: Each trade should be at least $25
 
@@ -21,14 +21,21 @@ MIN_BALANCE_RESERVE_PERCENT=20
 # Use 'best' strategy to focus on most profitable pair
 ALLOCATION_STRATEGY=best
 
-# Reduce to 5-20 most liquid pairs instead of 500+
-# This reduces API calls and focuses capital
+# Can use 500+ pairs - bot will focus on best opportunities
+# Or reduce to 5-20 most liquid pairs to reduce API calls
 TRADING_PAIRS=XRPUSDTM,BTCUSDTM,ETHUSDTM,SOLUSDTM,ADAUSDTM,DOTUSDTM,LINKUSDTM,BNBUSDTM,AVAXUSDTM,MATICUSDTM
 ```
 
 ### Step 2: Why This Works
 
-With your $120 balance:
+#### With $100 balance:
+- **Reserve**: $20 (20% protected)
+- **Available**: $80 for trading
+- **Min per trade**: $25 (margin required)
+- **Max positions**: 3 concurrent trades at $25 each
+
+#### With $120 balance:
+#### With $120 balance:
 - **Reserve**: $24 (20% protected)
 - **Available**: $96 for trading
 - **Min per trade**: $25 (margin required)
@@ -37,8 +44,9 @@ With your $120 balance:
 Using `ALLOCATION_STRATEGY=best`:
 - Bot scans all pairs
 - Picks the most profitable one
-- Allocates full $96 available to that pair
-- Ensures $25+ position size
+- Allocates majority to that pair (80%)
+- Reserves 20% for signal-matching pairs
+- Automatically redistributes when needed to meet $25+ position size
 
 ### Step 3: Understanding the Results
 
@@ -138,7 +146,9 @@ Instead of:
 ## Need More Balance?
 
 To comfortably trade with $25 minimum:
-- **Current**: $120 (tight, allows 1-3 positions)
+- **Minimum viable**: $31.25 (allows 1 position)
+- **Working**: $100 (allows 3 positions)
+- **Current**: $120 (allows 3-4 positions)
 - **Comfortable**: $150+ (allows 4-5 positions)
 - **Ideal**: $200+ (allows 6-8 positions)
 
