@@ -83,6 +83,30 @@ class WebDashboard:
                         })
             
             return jsonify(positions)
+        
+        @self.app.route('/health')
+        def health_check():
+            """Health check endpoint for monitoring"""
+            if not self.bot:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Bot not initialized'
+                }), 503
+            
+            health_status = {
+                'status': 'healthy' if self.bot.running else 'stopped',
+                'running': self.bot.running,
+                'timestamp': datetime.now().isoformat(),
+                'total_trades': self.bot.total_trades,
+                'current_balance': self.bot.current_balance,
+            }
+            
+            # Add uptime if available
+            if hasattr(self.bot, 'start_time'):
+                uptime_seconds = (datetime.now() - self.bot.start_time).total_seconds()
+                health_status['uptime_seconds'] = uptime_seconds
+            
+            return jsonify(health_status)
     
     def run(self, host='0.0.0.0', port=5000, debug=False):
         """Run the web dashboard

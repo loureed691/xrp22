@@ -164,6 +164,7 @@ class XRPHedgeBot:
         self.current_balance = Config.INITIAL_BALANCE
         self.positions = {}  # Track positions for each pair (multi-pair mode)
         self.recent_losses = 0  # Track consecutive losses
+        self.start_time = None  # Will be set when bot starts running
         
         # Create data directory
         os.makedirs('bot_data', exist_ok=True)
@@ -226,6 +227,10 @@ class XRPHedgeBot:
             ticker = self.client.get_ticker(symbol)
             current_price = float(ticker.get('price', 0))
             
+            if current_price <= 0:
+                logger.error(f"Invalid price received for {symbol}: {current_price}")
+                return None
+            
             # Get kline data for analysis (5 minute candles, last 8 hours)
             klines = self.client.get_klines(
                 symbol=symbol,
@@ -233,6 +238,10 @@ class XRPHedgeBot:
                 from_time=int(time.time() - 8 * 60 * 60) * 1000,  # Last 8 hours
                 to_time=int(time.time()) * 1000
             )
+            
+            if not klines or len(klines) < 10:
+                logger.warning(f"Insufficient kline data for {symbol}: {len(klines) if klines else 0} candles")
+                return None
             
             logger.info(f"{symbol} price: ${current_price:.6f}")
             logger.info(f"Retrieved {len(klines)} candles for analysis")
@@ -248,7 +257,7 @@ class XRPHedgeBot:
                 'symbol': symbol
             }
         except Exception as e:
-            logger.error(f"Error getting market data for {symbol}: {e}")
+            logger.error(f"Error getting market data for {symbol}: {e}", exc_info=True)
             return None
     
     def analyze_market(self, market_data: Dict) -> Dict:
@@ -367,6 +376,15 @@ class XRPHedgeBot:
             market_data: Optional pre-fetched market data to avoid redundant API calls
         """
         try:
+            # Validate inputs
+            if size <= 0:
+                logger.error(f"Invalid trade size: {size}")
+                return False
+            
+            if side not in ['buy', 'sell']:
+                logger.error(f"Invalid trade side: {side}")
+                return False
+            
             logger.info(f"Executing {action} on {symbol}: {side} {size} contracts - {reason}")
             
             # Adjust leverage if dynamic leverage is enabled
@@ -392,6 +410,7 @@ class XRPHedgeBot:
                         
                         # Update strategy with new leverage
                         self.strategy.leverage = adjusted_leverage
+                        logger.info(f"Dynamic leverage adjusted to {adjusted_leverage}x")
                 except Exception as e:
                     logger.warning(f"Dynamic leverage adjustment failed: {e}")
             
@@ -422,11 +441,14 @@ class XRPHedgeBot:
             
             return True
             
+        except ValueError as e:
+            logger.error(f"Validation error executing trade: {e}")
+            return False
         except Exception as e:
-            logger.error(f"Error executing trade: {e}")
+            logger.error(f"Error executing trade on {symbol}: {e}", exc_info=True)
             if self.telegram:
                 try:
-                    self.telegram.notify_error(f"Trade execution failed: {str(e)}")
+                    self.telegram.notify_error(f"Trade execution failed for {symbol}: {str(e)}")
                 except Exception as telegram_error:
                     logger.warning(f"Failed to send Telegram error notification: {telegram_error}")
             return False
@@ -703,6 +725,7 @@ class XRPHedgeBot:
         """
         logger.info(f"Starting bot with {interval}s interval...")
         self.running = True
+        self.start_time = datetime.now()
         
         try:
             while self.running:
