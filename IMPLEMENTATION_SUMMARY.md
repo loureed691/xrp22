@@ -49,18 +49,43 @@ ALLOCATION_STRATEGY=dynamic
 
 ---
 
-### 3. Advanced ML-Based Signals ✅
+### 3. Advanced ML-Based Signals ✅ **[ENHANCED v2.1]**
 **Files Created:**
 - `ml_signals.py` - Machine learning signal generator
 
 **Features:**
-- Ensemble of 4 models:
+- Ensemble of 6 advanced models:
   - Momentum model (trend detection)
   - Volatility model (risk adaptation)
   - MA crossover model (trend changes)
   - Mean reversion model (extremes)
-- Feature extraction from market data
-- Confidence scoring
+  - **NEW: Trend strength model (trend alignment & consistency)**
+  - **NEW: Support/Resistance model (key price levels)**
+- Enhanced feature extraction (19 features):
+  - Price momentum & acceleration
+  - Volatility metrics & clustering
+  - Volume analysis & momentum
+  - Moving average crossovers
+  - **NEW: Support/resistance levels**
+  - **NEW: Trend consistency scoring**
+  - **NEW: MA alignment detection**
+  - **NEW: Volatility clustering (GARCH-like)**
+- **NEW: Market regime detection:**
+  - Trending markets (high trend consistency)
+  - Ranging markets (consolidation)
+  - Volatile markets (high volatility clustering)
+- **NEW: Adaptive model weighting:**
+  - Tracks performance of each model
+  - Adjusts weights based on accuracy
+  - Better models get more influence
+- **NEW: Risk-adjusted signal filtering:**
+  - Higher thresholds in volatile markets
+  - Lower thresholds in trending markets
+  - Dampens signals during high uncertainty
+- **NEW: Enhanced confidence scoring:**
+  - Multiple validation metrics
+  - Volatility-adjusted confidence
+  - Trend clarity bonus
 - Signal strength calculation
 - Combined with traditional indicators
 
@@ -68,6 +93,13 @@ ALLOCATION_STRATEGY=dynamic
 ```env
 USE_ML_SIGNALS=true
 ```
+
+**Smart Learning:**
+The ML system now learns from its own performance:
+- Tracks which models are more accurate
+- Automatically adjusts model weights
+- Adapts to different market conditions
+- Provides regime-aware trading signals
 
 ---
 
