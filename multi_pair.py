@@ -201,18 +201,99 @@ class MultiPairManager:
         
         state = self.pair_states[symbol]
         
-        # Don't trade if no balance allocated
-        if self.pair_balances.get(symbol, 0) <= 0:
-            return False
-        
-        # Check signal strength
+        # Check signal strength first
         if signal.get('strength', 0) < 60:
             return False
+        
+        # If pair has insufficient balance but has a strong signal, try to boost allocation
+        current_balance = self.pair_balances.get(symbol, 0)
+        if current_balance <= 1:
+            logger.info(f"Pair {symbol} has strong signal (strength: {signal.get('strength', 0)}) but insufficient balance (${current_balance:.2f})")
+            # Try to boost allocation for this pair
+            if self.boost_allocation_for_signal(symbol, signal):
+                logger.info(f"Successfully boosted allocation for {symbol}")
+                # Re-check the updated balance after boosting
+                updated_balance = self.pair_balances.get(symbol, 0)
+                if updated_balance > 1:
+                    return True
+                else:
+                    logger.warning(f"Boosted allocation for {symbol}, but balance still insufficient (${updated_balance:.2f}), skipping trade")
+                    return False
+            else:
+                logger.warning(f"Could not boost allocation for {symbol}, skipping trade")
+                return False
         
         # Additional logic can be added here
         # e.g., correlation checks, market conditions, etc.
         
         return True
+    
+    def boost_allocation_for_signal(self, symbol: str, signal: Dict) -> bool:
+        """
+        Boost allocation for a pair that matches a signal.
+
+        Redistribution rules:
+        - Target allocation for the specified pair is at least 10% of the total allocated balance.
+        - No more than 20% of the balance can be taken from any donor pair.
+        - Donor pairs cannot be reduced below 10% of the total allocated balance.
+
+        Side effects:
+        - Mutates self.pair_balances to reflect the redistribution.
+
+        Args:
+            symbol: Trading pair symbol
+            signal: Current trading signal
+        Returns:
+            True if allocation was boosted, False otherwise
+        """
+        # Find pairs with excess allocation to redistribute
+        # Target: Get at least 10% of total allocated balance
+        total_allocated = sum(self.pair_balances.values())
+        if total_allocated <= 0:
+            return False
+        
+        target_amount = total_allocated * 0.10  # 10% of total
+        current_amount = self.pair_balances.get(symbol, 0)
+        
+        if current_amount >= target_amount:
+            return True  # Already has enough
+        
+        needed_amount = target_amount - current_amount
+        
+        # Try to get funds from pairs with higher allocation
+        # Sort pairs by allocation (highest first), excluding the target pair
+        sorted_pairs = sorted(
+            [(p, bal) for p, bal in self.pair_balances.items() if p != symbol],
+            key=lambda x: x[1],
+            reverse=True
+        )
+        
+        redistributed = 0
+        for pair, balance in sorted_pairs:
+            if redistributed >= needed_amount:
+                break
+            
+            # Take up to 20% from each pair, but don't reduce below 10% of total
+            min_balance_for_pair = total_allocated * 0.10
+            available_to_take = max(0, balance - min_balance_for_pair)
+            max_to_take = balance * 0.20  # Don't take more than 20%
+            
+            to_take = min(available_to_take, max_to_take, needed_amount - redistributed)
+            
+            if to_take > 0:
+                self.pair_balances[pair] -= to_take
+                redistributed += to_take
+                logger.info(f"Redistributed ${to_take:.2f} from {pair} to {symbol}")
+        
+        # Add redistributed amount to target pair
+        self.pair_balances[symbol] = current_amount + redistributed
+        
+        if redistributed > 0:
+            logger.info(f"Boosted {symbol} allocation from ${current_amount:.2f} to ${self.pair_balances[symbol]:.2f}")
+            return True
+        else:
+            logger.warning(f"Could not redistribute enough balance to {symbol}")
+            return False
     
     def get_active_pairs(self) -> List[str]:
         """Get list of pairs with active positions
@@ -326,10 +407,25 @@ class MultiPairManager:
         best_pair = self.get_best_pair()
         
         if best_pair:
-            # Allocate all to best pair
-            allocations[best_pair] = total_balance
-            logger.info(f"Allocated full balance (${total_balance:.2f}) to best pair: {best_pair}")
-        else:
+            # Allocate most to best pair, but reserve some for signal-matching pairs
+            # Reserve 20% for other pairs that might match signals
+            reserve_percent = 0.20
+            reserve_amount = total_balance * reserve_percent
+            best_pair_amount = total_balance - reserve_amount
+            
+            allocations[best_pair] = best_pair_amount
+            logger.info(f"Allocated ${best_pair_amount:.2f} to best pair: {best_pair}")
+            logger.info(f"Reserved ${reserve_amount:.2f} for signal-matching pairs")
+            
+            # Distribute reserve equally among other pairs
+            other_pairs = [p for p in self.trading_pairs if p != best_pair]
+            if other_pairs:
+                reserve_per_pair = reserve_amount / len(other_pairs)
+                for pair in other_pairs:
+                    allocations[pair] = reserve_per_pair
+            else:
+                # Only one trading pair, allocate full balance to best pair
+                allocations[best_pair] = total_balance
             # No trading history, use equal allocation as fallback
             logger.info("No trading history yet, using equal allocation as fallback")
             balance_per_pair = total_balance / len(self.trading_pairs)
