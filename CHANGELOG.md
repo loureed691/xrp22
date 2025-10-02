@@ -2,6 +2,48 @@
 
 All notable changes to the XRP Hedge Bot project will be documented in this file.
 
+## [2.1.0] - 2024-12-XX
+
+### Enhanced - ML Signal Generator Made Smarter
+- **Advanced Feature Engineering**: Expanded from 11 to 19 features
+  - Added support/resistance level detection
+  - Added trend consistency scoring
+  - Added MA alignment detection
+  - Added volatility clustering (GARCH-like)
+  - Added volume momentum analysis
+
+- **New ML Models**: Added 2 sophisticated models
+  - Trend Strength Model: Evaluates trend alignment and consistency
+  - Support/Resistance Model: Detects key price levels and bounce opportunities
+
+- **Market Regime Detection**: Automatic detection of market conditions
+  - Trending markets (high trend consistency and MA alignment)
+  - Ranging markets (consolidation patterns)
+  - Volatile markets (high volatility clustering)
+
+- **Adaptive Learning**: Models learn from their own performance
+  - Tracks accuracy of each model over time
+  - Automatically adjusts model weights based on performance
+  - Better models get more influence in ensemble decisions
+  - Requires minimum 10 predictions per model for weight adjustment
+
+- **Risk-Adjusted Signal Filtering**: Context-aware signal adjustments
+  - Higher thresholds in volatile markets (more conservative)
+  - Lower thresholds in trending markets (more aggressive)
+  - Dampens or amplifies signals based on market regime
+
+- **Enhanced Confidence Scoring**: Multi-factor confidence calculation
+  - Model agreement (low standard deviation)
+  - Volatility adjustment (reduces confidence in high vol)
+  - Trend clarity bonus (increases confidence in clear trends)
+
+### Documentation
+- Added `ML_ENHANCEMENTS.md` with comprehensive technical documentation
+- Updated `IMPLEMENTATION_SUMMARY.md` with v2.1 details
+- Enhanced `README.md` with smarter ML capabilities description
+
+---
+
 ## [2.0.0] - 2024-12-XX
 
 ### Added - Major Feature Release

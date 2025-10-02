@@ -17,7 +17,12 @@ A sophisticated, automated trading bot for KuCoin XRP futures with 11x leverage,
 ### Advanced Features (NEW!)
 - **🌐 Web Dashboard**: Real-time monitoring dashboard with trade history and performance metrics
 - **📊 Multiple Trading Pairs**: Trade multiple pairs simultaneously with intelligent allocation
-- **🤖 ML-Based Signals**: Advanced machine learning ensemble for signal generation
+- **🤖 ML-Based Signals (ENHANCED v2.1)**: 
+  - 6 advanced models with adaptive learning
+  - Market regime detection (trending/ranging/volatile)
+  - Automatic model weight adjustment based on performance
+  - 19 engineered features including support/resistance levels
+  - Risk-adjusted signal filtering for smarter decisions
 - **📈 Backtesting Framework**: Test strategies on historical data before live trading
 - **📱 Telegram Notifications**: Real-time trade alerts and P&L updates via Telegram
 - **💼 Portfolio Diversification**: Automatic correlation analysis and position sizing
@@ -223,13 +228,24 @@ The web dashboard provides real-time monitoring:
 - **Trade History**: Recent trade log with timestamps and reasons
 - **Auto-refresh**: Updates every 5 seconds automatically
 
-### ML-Based Signals
-The ML signal generator uses ensemble methods:
+### ML-Based Signals (v2.1 - Enhanced)
+The ML signal generator uses advanced ensemble methods with adaptive learning:
+
+**Six Models:**
 - **Momentum Model**: Analyzes price momentum and acceleration
 - **Volatility Model**: Adapts to market volatility conditions
 - **MA Crossover Model**: Detects trend changes
 - **Mean Reversion Model**: Identifies oversold/overbought extremes
-- **Ensemble Voting**: Combines all models for robust predictions
+- **Trend Strength Model**: Evaluates trend alignment and consistency (NEW)
+- **Support/Resistance Model**: Detects key price levels and bounces (NEW)
+
+**Smart Features:**
+- **Market Regime Detection**: Automatically detects trending, ranging, or volatile markets
+- **Adaptive Learning**: Models learn from performance and adjust their weights
+- **Risk-Adjusted Filtering**: More conservative in volatile markets, aggressive in trends
+- **19 Engineered Features**: Including support/resistance, trend consistency, volatility clustering
+
+See [ML_ENHANCEMENTS.md](ML_ENHANCEMENTS.md) for detailed technical documentation.
 
 ### Multiple Trading Pairs
 Trade multiple pairs simultaneously:
