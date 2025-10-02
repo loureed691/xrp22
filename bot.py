@@ -299,7 +299,7 @@ class XRPHedgeBot:
             if suggestion['action'] == 'open':
                 # Calculate volatility and win rate for intelligent sizing
                 volatility = self.calculate_volatility(market_data['klines'])
-                win_rate = (self.winning_trades / max(1, self.total_trades)) * 100
+                win_rate = (self.winning_trades / max(1, self.winning_trades + self.losing_trades)) * 100
                 
                 # Calculate position size with all relevant factors
                 size = self.strategy.calculate_position_size(
