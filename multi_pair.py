@@ -212,7 +212,13 @@ class MultiPairManager:
             # Try to boost allocation for this pair
             if self.boost_allocation_for_signal(symbol, signal):
                 logger.info(f"Successfully boosted allocation for {symbol}")
-                return True
+                # Re-check the updated balance after boosting
+                updated_balance = self.pair_balances.get(symbol, 0)
+                if updated_balance > 1:
+                    return True
+                else:
+                    logger.warning(f"Boosted allocation for {symbol}, but balance still insufficient (${updated_balance:.2f}), skipping trade")
+                    return False
             else:
                 logger.warning(f"Could not boost allocation for {symbol}, skipping trade")
                 return False
