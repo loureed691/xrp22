@@ -45,7 +45,7 @@ class Config:
     MIN_LEVERAGE = int(os.getenv('MIN_LEVERAGE', 5))
     MAX_LEVERAGE = int(os.getenv('MAX_LEVERAGE', 20))
     TRADING_PAIRS = os.getenv('TRADING_PAIRS', 'XRPUSDTM').split(',')
-    ALLOCATION_STRATEGY = os.getenv('ALLOCATION_STRATEGY', 'equal')  # equal, weighted, dynamic
+    ALLOCATION_STRATEGY = os.getenv('ALLOCATION_STRATEGY', 'equal')  # equal, weighted, dynamic, best
     
     # API Endpoints
     API_URL = 'https://api-futures.kucoin.com' if not USE_TESTNET else 'https://api-sandbox-futures.kucoin.com'

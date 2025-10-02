@@ -480,6 +480,18 @@ class EnhancedXRPBot:
                 for symbol, suggestion in rebalance_suggestions.items():
                     logger.info(f"  {symbol}: {suggestion}")
             
+            # Log pair rankings when using best strategy or periodically
+            if Config.ALLOCATION_STRATEGY == 'best' or self.total_trades % 5 == 0:
+                rankings = self.multi_pair.get_pair_rankings()
+                if rankings:
+                    logger.info("\n=== Trading Pair Performance Rankings ===")
+                    for i, rank in enumerate(rankings, 1):
+                        logger.info(f"{i}. {rank['symbol']}: "
+                                  f"Win Rate {rank['win_rate']:.1f}%, "
+                                  f"Trades {rank['total_trades']}, "
+                                  f"Score {rank['score']:.3f}")
+                    logger.info("=" * 45)
+            
             logger.info("=== Trading cycle complete ===\n")
             
         except Exception as e:

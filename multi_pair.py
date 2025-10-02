@@ -39,14 +39,18 @@ class MultiPairManager:
         
         Args:
             total_balance: Total available balance
-            allocation_strategy: Strategy for allocation ('equal', 'weighted', 'dynamic')
+            allocation_strategy: Strategy for allocation ('equal', 'weighted', 'dynamic', 'best')
             
         Returns:
             Dict mapping pair symbols to allocated balance
         """
         allocations = {}
         
-        if allocation_strategy == 'equal':
+        if allocation_strategy == 'best':
+            # Allocate all balance to the best performing pair
+            return self.allocate_to_best_pair(total_balance)
+        
+        elif allocation_strategy == 'equal':
             # Equal allocation across all pairs
             balance_per_pair = total_balance / len(self.trading_pairs)
             for pair in self.trading_pairs:
@@ -230,3 +234,109 @@ class MultiPairManager:
         """
         logger.info("Rebalancing portfolio...")
         self.allocate_balance(total_balance, strategy)
+    
+    def get_best_pair(self) -> Optional[str]:
+        """Identify the best/most profitable trading pair
+        
+        Returns:
+            Symbol of the best performing pair, or None if no data
+        """
+        if not self.trading_pairs:
+            return None
+        
+        best_pair = None
+        best_score = -float('inf')
+        
+        for pair in self.trading_pairs:
+            state = self.pair_states[pair]
+            total = state['winning_trades'] + state['losing_trades']
+            
+            # Skip pairs with no trading history
+            if total == 0:
+                continue
+            
+            # Calculate composite score based on multiple factors
+            win_rate = state['winning_trades'] / total
+            total_trades = state['total_trades']
+            
+            # Weighted score: win_rate (60%) + trade activity (40%)
+            # More trades = more reliable statistics
+            activity_score = min(1.0, total_trades / 20.0)  # Normalize to max at 20 trades
+            composite_score = (win_rate * 0.6) + (activity_score * 0.4)
+            
+            if composite_score > best_score:
+                best_score = composite_score
+                best_pair = pair
+        
+        if best_pair:
+            stats = self.get_pair_statistics(best_pair)
+            logger.info(f"Best performing pair: {best_pair} (Win rate: {stats['win_rate']:.1f}%, Trades: {stats['total_trades']})")
+        
+        return best_pair
+    
+    def get_pair_rankings(self) -> List[Dict]:
+        """Get ranking of all pairs by performance
+        
+        Returns:
+            List of dicts with pair stats, sorted by performance (best first)
+        """
+        rankings = []
+        
+        for pair in self.trading_pairs:
+            state = self.pair_states[pair]
+            total = state['winning_trades'] + state['losing_trades']
+            
+            if total == 0:
+                # No history, assign neutral score
+                composite_score = 0.0
+                win_rate = 0.0
+            else:
+                win_rate = (state['winning_trades'] / total) * 100
+                total_trades = state['total_trades']
+                
+                # Same scoring as get_best_pair
+                activity_score = min(1.0, total_trades / 20.0)
+                composite_score = ((state['winning_trades'] / total) * 0.6) + (activity_score * 0.4)
+            
+            rankings.append({
+                'symbol': pair,
+                'score': composite_score,
+                'win_rate': win_rate,
+                'total_trades': state['total_trades'],
+                'winning_trades': state['winning_trades'],
+                'losing_trades': state['losing_trades']
+            })
+        
+        # Sort by score (highest first)
+        rankings.sort(key=lambda x: x['score'], reverse=True)
+        
+        return rankings
+    
+    def allocate_to_best_pair(self, total_balance: float) -> Dict[str, float]:
+        """Allocate all balance to the best performing pair
+        
+        Args:
+            total_balance: Total available balance
+            
+        Returns:
+            Dict mapping pair symbols to allocated balance
+        """
+        allocations = {pair: 0.0 for pair in self.trading_pairs}
+        
+        best_pair = self.get_best_pair()
+        
+        if best_pair:
+            # Allocate all to best pair
+            allocations[best_pair] = total_balance
+            logger.info(f"Allocated full balance (${total_balance:.2f}) to best pair: {best_pair}")
+        else:
+            # No trading history, use equal allocation as fallback
+            logger.info("No trading history yet, using equal allocation as fallback")
+            balance_per_pair = total_balance / len(self.trading_pairs)
+            for pair in self.trading_pairs:
+                allocations[pair] = balance_per_pair
+        
+        # Store allocations
+        self.pair_balances = allocations
+        
+        return allocations
