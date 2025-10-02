@@ -2,6 +2,18 @@
 
 All notable changes to the XRP Hedge Bot project will be documented in this file.
 
+## [1.0.1] - 2024-10-02
+
+### Fixed
+- **Critical:** Fixed 401 Unauthorized error in KuCoin API authentication
+  - Query parameters are now correctly included in signature calculation for GET/DELETE requests
+  - This resolves authentication failures when calling endpoints like `get_account_overview()` and `get_position()`
+  - Follows KuCoin API v2 specification for HMAC-SHA256 signature generation
+
+### Documentation
+- Updated API_REFERENCE.md to clarify signature generation requirements
+- Added note about query parameter inclusion in signatures
+
 ## [1.0.0] - 2024-10-02
 
 ### Added
