@@ -17,6 +17,8 @@ A sophisticated, automated trading bot for KuCoin XRP futures with 11x leverage,
 ### Advanced Features (NEW!)
 - **🌐 Web Dashboard**: Real-time monitoring dashboard with trade history and performance metrics
 - **📊 Multiple Trading Pairs**: Trade multiple pairs simultaneously with intelligent allocation
+  - **⭐ Automatic Best Pair Selection**: NEW! Bot automatically identifies and trades only the most profitable pair
+  - Supports equal, weighted, dynamic, and best allocation strategies
 - **🤖 ML-Based Signals (ENHANCED v2.1)**: 
   - 6 advanced models with adaptive learning
   - Market regime detection (trending/ranging/volatile)

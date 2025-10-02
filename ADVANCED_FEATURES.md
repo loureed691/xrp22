@@ -89,6 +89,30 @@ ALLOCATION_STRATEGY=dynamic
 - Minimum 10% per pair
 - Recommended for experienced traders
 
+#### 4. Best Pair Allocation ⭐ NEW!
+Automatically selects and allocates ALL balance to the most profitable pair:
+```env
+ALLOCATION_STRATEGY=best
+```
+- Focuses on the single best performing pair
+- Maximizes returns by avoiding underperforming pairs
+- Adapts as trading history evolves
+- Requires at least some trading history to work effectively
+- Falls back to equal allocation when no history exists
+
+**How it works:**
+- Calculates a composite score for each pair based on:
+  - Win rate (60% weight)
+  - Trade activity/reliability (40% weight)
+- Automatically allocates 100% of balance to highest scoring pair
+- Continuously re-evaluates and can switch pairs as performance changes
+
+**Best for:**
+- Focusing capital on proven winners
+- Maximizing profitability
+- Traders who want automated pair selection
+- Situations where some pairs consistently outperform others
+
 ### Best Practices
 - Start with 2-3 pairs maximum
 - Use pairs with low correlation (XRP, BTC, ETH)

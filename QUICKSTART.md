@@ -221,6 +221,32 @@ TAKE_PROFIT_PERCENT=12         # Higher targets
 TRAILING_STOP_PERCENT=2        # Tighter trailing
 ```
 
+### Multiple Trading Pairs ⭐ NEW!
+Trade multiple pairs simultaneously or let the bot automatically select the best one:
+```env
+# Multiple pairs (comma-separated)
+TRADING_PAIRS=XRPUSDTM,BTCUSDTM,ETHUSDTM
+
+# Allocation strategy
+ALLOCATION_STRATEGY=best     # Automatically trades only the most profitable pair
+# Options: equal, weighted, dynamic, best
+```
+
+**Allocation Strategies:**
+- `equal`: Splits balance equally across all pairs
+- `weighted`: Allocates based on win rate (better performers get more)
+- `dynamic`: Adaptive allocation considering recent performance
+- `best`: ⭐ Automatically selects and trades ONLY the most profitable pair
+
+**Example:**
+```env
+# Let the bot choose the best pair automatically
+TRADING_PAIRS=XRPUSDTM,BTCUSDTM,ETHUSDTM,SOLUSDTM
+ALLOCATION_STRATEGY=best
+```
+
+The bot will track performance and automatically focus all trading on the pair with the best win rate and reliability!
+
 ## Safety Checklist
 
 Before running with real money:
