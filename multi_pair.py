@@ -232,10 +232,12 @@ class MultiPairManager:
         """
         Boost allocation for a pair that matches a signal.
 
-        Redistribution rules:
-        - Target allocation for the specified pair is at least 10% of the total allocated balance.
-        - No more than 20% of the balance can be taken from any donor pair.
-        - Donor pairs cannot be reduced below 10% of the total allocated balance.
+        Redistribution rules (adjusted based on signal strength):
+        - For strong signals (>=70), target is at least 15% of total balance
+        - For normal signals (60-69), target is at least 10% of total balance
+        - Can take up to 50% from donor pairs with no active positions
+        - Can take up to 30% from donor pairs with active positions
+        - Donor pairs can be reduced to 5% minimum (was 10%)
 
         Side effects:
         - Mutates self.pair_balances to reflect the redistribution.
@@ -247,12 +249,21 @@ class MultiPairManager:
             True if allocation was boosted, False otherwise
         """
         # Find pairs with excess allocation to redistribute
-        # Target: Get at least 10% of total allocated balance
         total_allocated = sum(self.pair_balances.values())
         if total_allocated <= 0:
             return False
         
-        target_amount = total_allocated * 0.10  # 10% of total
+        # Adjust target based on signal strength
+        signal_strength = signal.get('strength', 0)
+        if signal_strength >= 70:
+            # Strong signal - allocate more aggressively
+            target_percent = 0.15  # 15% of total
+            logger.info(f"Strong signal detected ({signal_strength}), targeting {target_percent*100:.0f}% allocation for {symbol}")
+        else:
+            # Normal signal
+            target_percent = 0.10  # 10% of total
+        
+        target_amount = total_allocated * target_percent
         current_amount = self.pair_balances.get(symbol, 0)
         
         if current_amount >= target_amount:
@@ -262,21 +273,40 @@ class MultiPairManager:
         
         # Try to get funds from pairs with higher allocation
         # Sort pairs by allocation (highest first), excluding the target pair
-        sorted_pairs = sorted(
-            [(p, bal) for p, bal in self.pair_balances.items() if p != symbol],
-            key=lambda x: x[1],
-            reverse=True
-        )
+        # Prioritize taking from pairs without active positions
+        pairs_without_positions = []
+        pairs_with_positions = []
+        
+        for p, bal in self.pair_balances.items():
+            if p != symbol:
+                if self.pair_states[p].get('position') is None:
+                    pairs_without_positions.append((p, bal))
+                else:
+                    pairs_with_positions.append((p, bal))
+        
+        # Sort both lists by balance (highest first)
+        pairs_without_positions.sort(key=lambda x: x[1], reverse=True)
+        pairs_with_positions.sort(key=lambda x: x[1], reverse=True)
+        
+        # Combine: prioritize pairs without positions
+        sorted_pairs = pairs_without_positions + pairs_with_positions
         
         redistributed = 0
         for pair, balance in sorted_pairs:
             if redistributed >= needed_amount:
                 break
             
-            # Take up to 20% from each pair, but don't reduce below 10% of total
-            min_balance_for_pair = total_allocated * 0.10
+            # Lower minimum balance threshold from 10% to 5%
+            min_balance_for_pair = total_allocated * 0.05
             available_to_take = max(0, balance - min_balance_for_pair)
-            max_to_take = balance * 0.20  # Don't take more than 20%
+            
+            # More aggressive taking based on whether pair has active position
+            if self.pair_states[pair].get('position') is None:
+                # No active position - can take up to 50%
+                max_to_take = balance * 0.50
+            else:
+                # Active position - take up to 30%
+                max_to_take = balance * 0.30
             
             to_take = min(available_to_take, max_to_take, needed_amount - redistributed)
             
@@ -426,6 +456,7 @@ class MultiPairManager:
             else:
                 # Only one trading pair, allocate full balance to best pair
                 allocations[best_pair] = total_balance
+        else:
             # No trading history, use equal allocation as fallback
             logger.info("No trading history yet, using equal allocation as fallback")
             balance_per_pair = total_balance / len(self.trading_pairs)
