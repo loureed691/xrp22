@@ -104,9 +104,9 @@ USE_TESTNET=true  # Set to 'false' for production
 
 # Risk Management
 MAX_POSITION_SIZE_PERCENT=80  # Use 80% of balance per trade
-STOP_LOSS_PERCENT=5           # Exit if loss exceeds 5%
-TAKE_PROFIT_PERCENT=8         # Take profit at 8% gain
-TRAILING_STOP_PERCENT=3       # Trail stop 3% from peak
+STOP_LOSS_PERCENT=3           # Exit if loss exceeds 3% (tighter for better risk management)
+TAKE_PROFIT_PERCENT=12        # Take profit at 12% gain (higher target for more profitability)
+TRAILING_STOP_PERCENT=2.5     # Trail stop 2.5% from peak (optimized to lock in profits)
 ```
 
 ### Advanced Features Configuration
@@ -134,8 +134,8 @@ ALLOCATION_STRATEGY=dynamic      # equal, weighted, or dynamic
 
 # Technical Indicators
 RSI_PERIOD=14
-RSI_OVERSOLD=30
-RSI_OVERBOUGHT=70
+RSI_OVERSOLD=35        # Optimized for better entry points
+RSI_OVERBOUGHT=65      # Optimized for better entry points
 EMA_SHORT=12
 EMA_LONG=26
 MACD_SIGNAL=9
@@ -203,9 +203,9 @@ The bot opens positions when multiple indicators align:
 
 ### Exit Signals
 Positions are closed when:
-- Stop loss is triggered (-5% by default)
-- Take profit target is reached (+8% by default)
-- Trailing stop is triggered (3% from peak/low)
+- Stop loss is triggered (-3% by default, optimized for better risk management)
+- Take profit target is reached (+12% by default, increased for higher profitability)
+- Trailing stop is triggered (2.5% from peak/low, optimized to lock in gains)
 
 ### Hedge Strategy
 The bot opens counter-positions to protect against losses:
@@ -265,9 +265,10 @@ Stay informed with real-time alerts:
 
 - **Maximum Position Size**: 80% of available balance
 - **11x Leverage**: Amplifies both gains and losses
-- **Stop Loss**: Automatically exits at 5% loss
-- **Take Profit**: Locks in gains at 8% profit
-- **Trailing Stop**: Protects profits by trailing 3% from peak
+- **Stop Loss**: Automatically exits at 3% loss (tighter for better risk control)
+- **Take Profit**: Locks in gains at 12% profit (optimized for higher returns)
+- **Trailing Stop**: Protects profits by trailing 2.5% from peak (improved profit locking)
+- **Signal Threshold**: Requires 55+ signal strength (optimized for more opportunities)
 
 ## File Structure
 

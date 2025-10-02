@@ -23,14 +23,14 @@ class Config:
     
     # Risk Management
     MAX_POSITION_SIZE_PERCENT = float(os.getenv('MAX_POSITION_SIZE_PERCENT', 80))
-    STOP_LOSS_PERCENT = float(os.getenv('STOP_LOSS_PERCENT', 5))
-    TAKE_PROFIT_PERCENT = float(os.getenv('TAKE_PROFIT_PERCENT', 8))
-    TRAILING_STOP_PERCENT = float(os.getenv('TRAILING_STOP_PERCENT', 3))
+    STOP_LOSS_PERCENT = float(os.getenv('STOP_LOSS_PERCENT', 3))
+    TAKE_PROFIT_PERCENT = float(os.getenv('TAKE_PROFIT_PERCENT', 12))
+    TRAILING_STOP_PERCENT = float(os.getenv('TRAILING_STOP_PERCENT', 2.5))
     
     # Technical Indicators
     RSI_PERIOD = int(os.getenv('RSI_PERIOD', 14))
-    RSI_OVERSOLD = float(os.getenv('RSI_OVERSOLD', 30))
-    RSI_OVERBOUGHT = float(os.getenv('RSI_OVERBOUGHT', 70))
+    RSI_OVERSOLD = float(os.getenv('RSI_OVERSOLD', 35))
+    RSI_OVERBOUGHT = float(os.getenv('RSI_OVERBOUGHT', 65))
     EMA_SHORT = int(os.getenv('EMA_SHORT', 12))
     EMA_LONG = int(os.getenv('EMA_LONG', 26))
     MACD_SIGNAL = int(os.getenv('MACD_SIGNAL', 9))

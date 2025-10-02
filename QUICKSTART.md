@@ -89,9 +89,9 @@ Press `Ctrl+C` to safely stop the bot.
 ```env
 LEVERAGE=11                      # 11x leverage
 MAX_POSITION_SIZE_PERCENT=80     # Use 80% of balance
-STOP_LOSS_PERCENT=5              # Exit at 5% loss
-TAKE_PROFIT_PERCENT=8            # Take profit at 8% gain
-TRAILING_STOP_PERCENT=3          # Trail 3% from peak
+STOP_LOSS_PERCENT=3              # Exit at 3% loss (optimized)
+TAKE_PROFIT_PERCENT=12           # Take profit at 12% gain (higher target)
+TRAILING_STOP_PERCENT=2.5        # Trail 2.5% from peak (improved profit protection)
 ```
 
 ### Trading Cycle
@@ -125,22 +125,22 @@ Default: 60 seconds between cycles
 The bot enters positions when multiple indicators align:
 
 **Long (Buy) Entry:**
-- RSI < 30 (oversold)
+- RSI < 35 (oversold, optimized threshold)
 - MACD bullish crossover
 - Price below lower Bollinger Band
 - EMA short > EMA long
 
 **Short (Sell) Entry:**
-- RSI > 70 (overbought)
+- RSI > 65 (overbought, optimized threshold)
 - MACD bearish crossover
 - Price above upper Bollinger Band
 - EMA short < EMA long
 
 ### Exit Conditions
 Positions are closed when:
-- **Stop Loss**: -5% loss
-- **Take Profit**: +8% gain
-- **Trailing Stop**: 3% decline from peak (long) or 3% rise from low (short)
+- **Stop Loss**: -3% loss (optimized for better risk management)
+- **Take Profit**: +12% gain (higher target for increased profitability)
+- **Trailing Stop**: 2.5% decline from peak (long) or 2.5% rise from low (short)
 
 ### Hedging Strategy
 When a position is losing >2%, the bot may open a counter-position:
@@ -206,8 +206,8 @@ This reduces overall exposure and protects capital.
 ### Customize Technical Indicators
 ```env
 RSI_PERIOD=14           # RSI calculation period
-RSI_OVERSOLD=30         # Buy threshold
-RSI_OVERBOUGHT=70       # Sell threshold
+RSI_OVERSOLD=35         # Buy threshold (optimized for better entries)
+RSI_OVERBOUGHT=65       # Sell threshold (optimized for better entries)
 EMA_SHORT=12            # Fast EMA
 EMA_LONG=26             # Slow EMA
 MACD_SIGNAL=9           # MACD signal line
@@ -216,9 +216,9 @@ MACD_SIGNAL=9           # MACD signal line
 ### Adjust Risk Parameters
 ```env
 MAX_POSITION_SIZE_PERCENT=80   # Lower for less risk
-STOP_LOSS_PERCENT=3            # Tighter stops
-TAKE_PROFIT_PERCENT=12         # Higher targets
-TRAILING_STOP_PERCENT=2        # Tighter trailing
+STOP_LOSS_PERCENT=3            # Tighter stops (improved from 5%)
+TAKE_PROFIT_PERCENT=12         # Higher targets (improved from 8%)
+TRAILING_STOP_PERCENT=2.5      # Optimized trailing (improved from 3%)
 ```
 
 ## Safety Checklist

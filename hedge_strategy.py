@@ -49,7 +49,7 @@ class HedgeStrategy:
         if signal['action'] != 'buy':
             return False, "Signal is not buy"
         
-        if signal['strength'] < 60:
+        if signal['strength'] < 55:
             return False, f"Signal strength too low: {signal['strength']}"
         
         # Check if we already have a long position
@@ -63,7 +63,7 @@ class HedgeStrategy:
         if signal['action'] != 'sell':
             return False, "Signal is not sell"
         
-        if signal['strength'] < 60:
+        if signal['strength'] < 55:
             return False, f"Signal strength too low: {signal['strength']}"
         
         # Check if we already have a short position
@@ -199,14 +199,14 @@ class HedgeStrategy:
         
         # If no position, look for entry signals
         if current_qty == 0:
-            if signal['action'] == 'buy' and signal['strength'] >= 60:
+            if signal['action'] == 'buy' and signal['strength'] >= 55:
                 return {
                     'action': 'open',
                     'side': 'buy',
                     'reason': signal['reason'],
                     'confidence': signal['strength']
                 }
-            elif signal['action'] == 'sell' and signal['strength'] >= 60:
+            elif signal['action'] == 'sell' and signal['strength'] >= 55:
                 return {
                     'action': 'open',
                     'side': 'sell',

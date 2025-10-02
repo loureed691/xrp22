@@ -18,8 +18,8 @@ class BacktestEngine:
     """Backtest trading strategies on historical data"""
     
     def __init__(self, initial_balance: float = 100.0, leverage: int = 11,
-                 stop_loss_percent: float = 5.0, take_profit_percent: float = 8.0,
-                 trailing_stop_percent: float = 3.0, max_position_size_percent: float = 80.0):
+                 stop_loss_percent: float = 3.0, take_profit_percent: float = 12.0,
+                 trailing_stop_percent: float = 2.5, max_position_size_percent: float = 80.0):
         """Initialize backtest engine
         
         Args:
@@ -135,7 +135,7 @@ class BacktestEngine:
         return new_balance, trade_record
     
     def run_backtest(self, historical_klines: List[List], 
-                    rsi_oversold: float = 30, rsi_overbought: float = 70) -> Dict:
+                    rsi_oversold: float = 35, rsi_overbought: float = 65) -> Dict:
         """Run backtest on historical data
         
         Args:

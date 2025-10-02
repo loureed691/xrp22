@@ -97,9 +97,9 @@ def demo_position_sizing():
     
     strategy = HedgeStrategy(
         leverage=11,
-        stop_loss_percent=5,
-        take_profit_percent=8,
-        trailing_stop_percent=3,
+        stop_loss_percent=3,
+        take_profit_percent=12,
+        trailing_stop_percent=2.5,
         max_position_size_percent=80
     )
     
@@ -133,9 +133,9 @@ def demo_risk_management():
     
     strategy = HedgeStrategy(
         leverage=11,
-        stop_loss_percent=5,
-        take_profit_percent=8,
-        trailing_stop_percent=3,
+        stop_loss_percent=3,
+        take_profit_percent=12,
+        trailing_stop_percent=2.5,
         max_position_size_percent=80
     )
     
@@ -143,10 +143,10 @@ def demo_risk_management():
     position_qty = 1000
     
     scenarios = [
-        ("Stop Loss", 0.494),      # -5% from entry
+        ("Stop Loss", 0.504),      # -3% from entry
         ("Small Profit", 0.531),   # +2% from entry
-        ("Take Profit", 0.562),    # +8% from entry
-        ("Large Gain", 0.572),     # +10% from entry
+        ("Take Profit", 0.582),    # +12% from entry
+        ("Large Gain", 0.598),     # +15% from entry
     ]
     
     print(f"\n📊 Long Position Scenarios:")
@@ -179,12 +179,12 @@ def demo_signal_generation():
     print("=" * 60)
     
     print("\n🔍 Signal Requirements:")
-    print("   - Minimum strength: 60/100")
+    print("   - Minimum strength: 55/100 (optimized for more opportunities)")
     print("   - Multiple indicator confirmation")
     print("   - Risk/reward validation")
     
     print("\n✅ Strong Buy Signal Example:")
-    print("   - RSI: 25 (oversold)")
+    print("   - RSI: 32 (oversold)")
     print("   - MACD: Bullish crossover")
     print("   - Price: Below lower Bollinger Band")
     print("   - EMA: Bullish alignment")
@@ -192,7 +192,7 @@ def demo_signal_generation():
     print("   → Action: OPEN LONG")
     
     print("\n✅ Strong Sell Signal Example:")
-    print("   - RSI: 75 (overbought)")
+    print("   - RSI: 68 (overbought)")
     print("   - MACD: Bearish crossover")
     print("   - Price: Above upper Bollinger Band")
     print("   - EMA: Bearish alignment")
