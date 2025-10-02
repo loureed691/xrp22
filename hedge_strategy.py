@@ -14,12 +14,13 @@ class HedgeStrategy:
     
     def __init__(self, leverage: int, stop_loss_percent: float, 
                  take_profit_percent: float, trailing_stop_percent: float,
-                 max_position_size_percent: float):
+                 max_position_size_percent: float, funding_strategy=None):
         self.leverage = leverage
         self.stop_loss_percent = stop_loss_percent
         self.take_profit_percent = take_profit_percent
         self.trailing_stop_percent = trailing_stop_percent
         self.max_position_size_percent = max_position_size_percent
+        self.funding_strategy = funding_strategy
         
         # Position tracking
         self.long_position = None
@@ -29,20 +30,41 @@ class HedgeStrategy:
         self.highest_price_long = None
         self.lowest_price_short = None
         
-    def calculate_position_size(self, available_balance: float, current_price: float) -> int:
-        """Calculate position size in contracts"""
-        # Use a percentage of available balance
-        position_value = available_balance * (self.max_position_size_percent / 100)
+    def calculate_position_size(self, available_balance: float, current_price: float, 
+                               volatility: float = 0.03, win_rate: float = 50.0,
+                               recent_losses: int = 0, signal_strength: int = 60,
+                               existing_positions_value: float = 0.0) -> int:
+        """Calculate position size in contracts
         
-        # Apply leverage
-        position_value_with_leverage = position_value * self.leverage
-        
-        # Calculate number of contracts (1 contract = $1 in XRP)
-        # KuCoin uses multiplier, typically 1 contract = 1 XRP worth of value
-        size = int(position_value_with_leverage / current_price)
-        
-        # Minimum size is 1
-        return max(1, size)
+        If funding_strategy is available, uses intelligent risk-based sizing.
+        Otherwise, falls back to simple percentage-based calculation.
+        """
+        if self.funding_strategy:
+            # Use intelligent funding strategy
+            return self.funding_strategy.calculate_position_size(
+                available_balance=available_balance,
+                current_price=current_price,
+                leverage=self.leverage,
+                volatility=volatility,
+                win_rate=win_rate,
+                recent_losses=recent_losses,
+                signal_strength=signal_strength,
+                existing_positions_value=existing_positions_value
+            )
+        else:
+            # Fallback to old method
+            # Use a percentage of available balance
+            position_value = available_balance * (self.max_position_size_percent / 100)
+            
+            # Apply leverage
+            position_value_with_leverage = position_value * self.leverage
+            
+            # Calculate number of contracts (1 contract = $1 in XRP)
+            # KuCoin uses multiplier, typically 1 contract = 1 XRP worth of value
+            size = int(position_value_with_leverage / current_price)
+            
+            # Minimum size is 1
+            return max(1, size)
     
     def should_open_long(self, signal: Dict, current_positions: Dict) -> Tuple[bool, str]:
         """Determine if we should open a long position"""

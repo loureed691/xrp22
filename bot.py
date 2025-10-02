@@ -13,6 +13,7 @@ from config import Config
 from kucoin_client import KuCoinFuturesClient
 from technical_analysis import TechnicalAnalyzer
 from hedge_strategy import HedgeStrategy
+from funding_strategy import FundingStrategy
 
 # Setup logging
 logging.basicConfig(
@@ -51,13 +52,30 @@ class XRPHedgeBot:
             macd_signal=Config.MACD_SIGNAL
         )
         
+        # Initialize funding strategy if enabled
+        funding_strategy = None
+        if Config.USE_FUNDING_STRATEGY:
+            funding_strategy = FundingStrategy(
+                min_balance_reserve_percent=Config.MIN_BALANCE_RESERVE_PERCENT,
+                base_position_size_percent=Config.BASE_POSITION_SIZE_PERCENT,
+                max_position_size_percent=Config.MAX_POSITION_SIZE_PERCENT_NEW,
+                min_position_size_percent=Config.MIN_POSITION_SIZE_PERCENT
+            )
+            logger.info("Using intelligent funding strategy")
+        else:
+            logger.info("Using legacy position sizing")
+        
         self.strategy = HedgeStrategy(
             leverage=Config.LEVERAGE,
             stop_loss_percent=Config.STOP_LOSS_PERCENT,
             take_profit_percent=Config.TAKE_PROFIT_PERCENT,
             trailing_stop_percent=Config.TRAILING_STOP_PERCENT,
-            max_position_size_percent=Config.MAX_POSITION_SIZE_PERCENT
+            max_position_size_percent=Config.MAX_POSITION_SIZE_PERCENT,
+            funding_strategy=funding_strategy
         )
+        
+        # Store reference for direct access
+        self.funding_strategy = funding_strategy
         
         # Bot state
         self.running = False
@@ -67,6 +85,7 @@ class XRPHedgeBot:
         self.total_profit = 0.0
         self.initial_balance = Config.INITIAL_BALANCE
         self.current_balance = Config.INITIAL_BALANCE
+        self.recent_losses = 0  # Track consecutive losses
         
         # Create data directory
         os.makedirs('bot_data', exist_ok=True)
@@ -148,6 +167,35 @@ class XRPHedgeBot:
         logger.info(f"Signal: {signal['action'].upper()} | Strength: {signal['strength']} | Reason: {signal['reason']}")
         
         return signal
+    
+    def calculate_volatility(self, klines: list) -> float:
+        """Calculate market volatility from klines
+        
+        Args:
+            klines: List of kline data
+            
+        Returns:
+            Volatility as a decimal (e.g., 0.03 for 3%)
+        """
+        if not klines or len(klines) < 2:
+            return 0.03  # Default 3%
+        
+        # Calculate returns from close prices
+        closes = [float(k[4]) for k in klines]  # Index 4 is close price
+        returns = []
+        for i in range(1, len(closes)):
+            ret = (closes[i] - closes[i-1]) / closes[i-1]
+            returns.append(ret)
+        
+        # Calculate standard deviation of returns
+        if not returns:
+            return 0.03
+        
+        mean_return = sum(returns) / len(returns)
+        variance = sum((r - mean_return) ** 2 for r in returns) / len(returns)
+        volatility = variance ** 0.5
+        
+        return volatility
     
     def execute_trade(self, action: str, side: str, size: int, reason: str) -> bool:
         """Execute a trade"""
@@ -249,17 +297,51 @@ class XRPHedgeBot:
             
             # Execute action based on suggestion
             if suggestion['action'] == 'open':
-                size = self.strategy.calculate_position_size(balance, market_data['price'])
+                # Calculate volatility and win rate for intelligent sizing
+                volatility = self.calculate_volatility(market_data['klines'])
+                win_rate = (self.winning_trades / max(1, self.total_trades)) * 100
+                
+                # Calculate position size with all relevant factors
+                size = self.strategy.calculate_position_size(
+                    available_balance=balance,
+                    current_price=market_data['price'],
+                    volatility=volatility,
+                    win_rate=win_rate,
+                    recent_losses=self.recent_losses,
+                    signal_strength=signal['strength'],
+                    existing_positions_value=0.0  # No multi-pair in basic bot
+                )
+                
                 if size > 0:
-                    self.execute_trade('open', suggestion['side'], size, suggestion['reason'])
-                    self.strategy.reset_tracking()
+                    # Check if trade should be allowed
+                    if self.funding_strategy:
+                        position_value = size * market_data['price'] / Config.LEVERAGE
+                        should_allow, reason = self.funding_strategy.should_allow_trade(
+                            balance, position_value, self.recent_losses
+                        )
+                        if not should_allow:
+                            logger.warning(f"Trade blocked: {reason}")
+                            return
+                    
+                    success = self.execute_trade('open', suggestion['side'], size, suggestion['reason'])
+                    if success:
+                        self.strategy.reset_tracking()
+                        self.recent_losses = 0
                     
             elif suggestion['action'] == 'close':
                 if position:
                     size = abs(position.get('currentQty', 0))
                     if size > 0:
-                        self.execute_trade('close', suggestion['side'], size, suggestion['reason'])
-                        self.strategy.reset_tracking()
+                        pnl = float(position.get('unrealisedPnl', 0))
+                        success = self.execute_trade('close', suggestion['side'], size, suggestion['reason'])
+                        if success:
+                            self.strategy.reset_tracking()
+                            
+                            # Track losses for funding strategy
+                            if pnl < 0:
+                                self.recent_losses += 1
+                            else:
+                                self.recent_losses = 0
                         
             elif suggestion['action'] == 'hedge':
                 hedge_size = self.strategy.calculate_hedge_size(position.get('currentQty', 0))
