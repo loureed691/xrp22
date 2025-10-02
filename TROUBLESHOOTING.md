@@ -220,6 +220,20 @@ Common issues and solutions for the XRP Hedge Bot.
 3. Use log rotation (future feature)
 4. Clear logs periodically
 
+### UnicodeEncodeError on Windows
+**Error:** `UnicodeEncodeError: 'charmap' codec can't encode character '\u2713'`
+
+**Description:**
+This error occurs on Windows when the bot tries to log messages containing Unicode characters (like ✓) to the console, which uses cp1252 encoding by default.
+
+**Solutions:**
+1. **Automatic Fix (v2.0+):** The bot now handles this automatically
+2. **If still occurring:** Update to latest version
+3. **Manual workaround:** Set console to UTF-8: `chcp 65001`
+4. **Alternative:** Use Windows Terminal (better Unicode support)
+
+**Note:** This has been fixed in bot.py and bot_legacy.py as of the latest update. Log files are written with UTF-8 encoding, and console output gracefully handles encoding errors. See UNICODE_FIX.md for technical details.
+
 ## Module Import Errors
 
 ### Cannot Import Module
