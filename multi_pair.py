@@ -207,14 +207,15 @@ class MultiPairManager:
         
         # If pair has insufficient balance but has a strong signal, try to boost allocation
         current_balance = self.pair_balances.get(symbol, 0)
-        if current_balance <= 1:
+        # Check if balance is less than minimum position value
+        if current_balance < Config.MIN_POSITION_VALUE_USD:
             logger.info(f"Pair {symbol} has strong signal (strength: {signal.get('strength', 0)}) but insufficient balance (${current_balance:.2f})")
             # Try to boost allocation for this pair
             if self.boost_allocation_for_signal(symbol, signal):
                 logger.info(f"Successfully boosted allocation for {symbol}")
                 # Re-check the updated balance after boosting
                 updated_balance = self.pair_balances.get(symbol, 0)
-                if updated_balance > 1:
+                if updated_balance >= Config.MIN_POSITION_VALUE_USD:
                     return True
                 else:
                     logger.warning(f"Boosted allocation for {symbol}, but balance still insufficient (${updated_balance:.2f}), skipping trade")
@@ -233,9 +234,10 @@ class MultiPairManager:
         Boost allocation for a pair that matches a signal.
 
         Redistribution rules:
-        - Target allocation for the specified pair is at least 10% of the total allocated balance.
-        - No more than 20% of the balance can be taken from any donor pair.
-        - Donor pairs cannot be reduced below 10% of the total allocated balance.
+        - Target allocation is the greater of: MIN_POSITION_VALUE_USD or 10% of total
+        - Prioritizes taking funds from pairs with highest allocations
+        - Can take up to 50% from the best pair (if it has >50% of total)
+        - Other pairs: take up to 30%, but not below MIN_POSITION_VALUE_USD if possible
 
         Side effects:
         - Mutates self.pair_balances to reflect the redistribution.
@@ -247,13 +249,20 @@ class MultiPairManager:
             True if allocation was boosted, False otherwise
         """
         # Find pairs with excess allocation to redistribute
-        # Target: Get at least 10% of total allocated balance
         total_allocated = sum(self.pair_balances.values())
         if total_allocated <= 0:
             return False
         
-        target_amount = total_allocated * 0.10  # 10% of total
+        # Target is the greater of MIN_POSITION_VALUE_USD or 10% of total
+        min_target = max(Config.MIN_POSITION_VALUE_USD, total_allocated * 0.10)
+        
+        # If total allocated is less than MIN_POSITION_VALUE_USD, we can't meet the minimum
+        if total_allocated < Config.MIN_POSITION_VALUE_USD:
+            logger.warning(f"Total allocated balance ${total_allocated:.2f} is less than minimum position value ${Config.MIN_POSITION_VALUE_USD:.2f}")
+            return False
+        
         current_amount = self.pair_balances.get(symbol, 0)
+        target_amount = min(min_target, total_allocated * 0.5)  # Cap at 50% of total
         
         if current_amount >= target_amount:
             return True  # Already has enough
@@ -269,14 +278,24 @@ class MultiPairManager:
         )
         
         redistributed = 0
-        for pair, balance in sorted_pairs:
+        for idx, (pair, balance) in enumerate(sorted_pairs):
             if redistributed >= needed_amount:
                 break
             
-            # Take up to 20% from each pair, but don't reduce below 10% of total
-            min_balance_for_pair = total_allocated * 0.10
-            available_to_take = max(0, balance - min_balance_for_pair)
-            max_to_take = balance * 0.20  # Don't take more than 20%
+            # For the pair with highest balance (likely the "best" pair), be more aggressive
+            if idx == 0 and balance > total_allocated * 0.5:
+                # This is the dominant pair - can take up to 50% from it
+                max_percentage = 0.50
+                # But leave at least MIN_POSITION_VALUE_USD or 20% of total, whichever is greater
+                min_to_leave = max(Config.MIN_POSITION_VALUE_USD, total_allocated * 0.20)
+            else:
+                # For other pairs, take up to 30%
+                max_percentage = 0.30
+                # Leave at least MIN_POSITION_VALUE_USD or 5% of total, whichever is greater
+                min_to_leave = max(Config.MIN_POSITION_VALUE_USD, total_allocated * 0.05)
+            
+            available_to_take = max(0, balance - min_to_leave)
+            max_to_take = balance * max_percentage
             
             to_take = min(available_to_take, max_to_take, needed_amount - redistributed)
             
@@ -426,6 +445,7 @@ class MultiPairManager:
             else:
                 # Only one trading pair, allocate full balance to best pair
                 allocations[best_pair] = total_balance
+        else:
             # No trading history, use equal allocation as fallback
             logger.info("No trading history yet, using equal allocation as fallback")
             balance_per_pair = total_balance / len(self.trading_pairs)
